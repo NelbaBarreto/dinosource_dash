@@ -102,30 +102,27 @@ def actualizar_grafico_resumen(periodo_seleccionado):
     Input("dropdown-periodo", "value"),
 )
 def actualizar_grafico_periodo(periodo_seleccionado):
-    # Cargar y procesar los data de los dinosaurios
-    # ... (código para cargar y procesar data)
-
-    # Filtrar los data por período
+    # Filtrar los datos por período
     data_filtrados = data[data["period"] == periodo_seleccionado]
 
-    # Crear el gráfico de período
-    count_by_period = data_filtrados.value_counts()
+    # Contar la cantidad de dinosaurios por período
+    count_by_period = data_filtrados['period'].value_counts()
+
+    # Crear el gráfico de barras
     grafico_periodo = go.Figure(
         data=[
-            go.Histogram(
+            go.Bar(
                 x=count_by_period.index,
                 y=count_by_period,
-                histnorm="probability",
-                name="Distribución por Período",
+                name="Cantidad de Dinosaurios"
             )
         ],
         layout={
             "title": "Cantidad de Dinosaurios por Período",
             "xaxis": {"title": "Período Geológico"},
-            "yaxis": {"title": "Densidad de Probabilidad"},
+            "yaxis": {"title": "Cantidad"},
         },
     )
-
     return grafico_periodo
 
 
