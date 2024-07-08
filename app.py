@@ -26,104 +26,56 @@ data["period"] = data["full_period"].apply(substr_till_second_space)
 # Listar los valores únicos de los periodos del dataset
 unique_periods = list(data["period"].unique())
 
-app.layout = html.Div(
-    children=[
-        html.H1("Dinosaur Data Analysis 🦕", style={"textAlign": "center"}),
-        dcc.Tabs(
-            children=[
-                dcc.Tab(
-                    label="Resumen",
-                    children=[
-                        dcc.Graph(
-                            id="grafico-resumen",
-                            style={"width": "100%", "height": 500},
-                        )
-                    ],
-                ),
-                dcc.Tab(
-                    label="Período",
-                    children=[
-                        dcc.Dropdown(
-                            id="dropdown-periodo",
-                            options=unique_periods,
-                            # seleccionar por defecto el primer valor de la lista
-                            value=unique_periods[0],
-                        ),
-                        dcc.Graph(id="grafico-periodo", style={"width": "100%", "height": 500}),
-                    ],
-                ),
-            ],
-            style={"width": "100%"},
-        ),
-    ],
-    style={
-        "backgroundColor": "#0f172a",
-        "color": "#ffffff",
-        "fontFamily": "sans-serif",
-        "padding": 20,
-    },
-)
+# Estilos CSS para el fondo de color
+styles = {
+    "background": "#0f172a",
+    "textColor": "#ffffff",  # Color de texto blanco
+    "fontFamily": "sans-serif",
+    "textAlign": "center"
+}
 
-# Definir el callback para el gráfico de resumen
+# Diseño del la aplicación
+app.layout = html.Div(style=styles, children=[
+    html.H1("Dinosaur Data Analysis 🦕", style={"color": "#ffffff"}),  # Encabezado blanco
+
+    # Botones
+    html.Div([
+        html.Button("Overview", id="btn-overview", n_clicks=0, style={"margin": "10px"}),
+        html.Button("Periodo", id="btn-periodo", n_clicks=0, style={"margin": "10px"})
+    ]),
+
+    # Espacio para el gráfico (se actualiza dinámicamente)
+    dcc.Graph(id="grafico-dinosaurios")
+])
+
+# Callback para manejar el click en los botones
 @app.callback(
-    Output("grafico-resumen", "figure"),
-    Input("dropdown-periodo", "value"),
+    Output("grafico-dinosaurios", "figure"),
+    [Input("btn-overview", "n_clicks"), Input("btn-periodo", "n_clicks")]
 )
-def actualizar_grafico_resumen(periodo_seleccionado):
-    # Cargar y procesar los data de los dinosaurios
-    # ... (código para cargar y procesar data)
+def actualizar_grafico(n_clicks_overview, n_clicks_periodo):
+    # Determinar cuál botón fue presionado
+    boton_presionado = dash.callback_context.triggered[0]["prop_id"].split(".")[0]
 
-    # Filtrar los data por período
-    data_filtrados = data[data["period"] == periodo_seleccionado]
+    # Lógica para actualizar el gráfico según el botón presionado
+    if boton_presionado == "btn-overview":
+        # Lógica para el gráfico de Overview
+        fig = go.Figure(data=[go.Scatter(x=data["name"], y=data.index, mode="markers")])
+        fig.update_layout(title="Overview de Dinosaurios", plot_bgcolor="#0f172a", paper_bgcolor="#0f172a", font_color="#ffffff")
 
-    # Crear el gráfico de resumen
-    grafico_resumen = go.Figure(
-        data=[
-            go.Scatter(
-                x=data_filtrados["name"],
-                y=data_filtrados["length"],
-                mode="markers",
-                name="Longitud",
-            )
-        ],
-        layout={
-            "title": f"Longitud de Dinosaurios por Nombre {periodo_seleccionado}",
-            "xaxis": {"title": "Nombre del Dinosaurio"},
-            "yaxis": {"title": "Longitud (en metros)"},
-        },
-    )
+    elif boton_presionado == "btn-periodo":
+        # Lógica para el gráfico por Período
+        count_by_period = data["period"].value_counts()
+        fig = go.Figure(data=[go.Bar(x=count_by_period.index, y=count_by_period)])
+        fig.update_layout(title="Cantidad de Dinosaurios por Período", xaxis_title="Período", yaxis_title="Cantidad",
+                          plot_bgcolor="#0f172a", paper_bgcolor="#0f172a", font_color="#ffffff")
 
-    return grafico_resumen
+    else:
+        # Por defecto, mostrar el gráfico de Overview
+        fig = go.Figure(data=[go.Scatter(x=data["name"], y=data.index, mode="markers")])
+        fig.update_layout(title="Overview de Dinosaurios", plot_bgcolor="#0f172a", paper_bgcolor="#0f172a", font_color="#ffffff")
 
-
-# Definir el callback para el gráfico de período
-@app.callback(
-    Output("grafico-periodo", "figure"),
-    Input("dropdown-periodo", "value"),
-)
-def actualizar_grafico_periodo(periodo_seleccionado):
-    # Filtrar los datos por período
-    data_filtrados = data[data["period"] == periodo_seleccionado]
-
-    # Contar la cantidad de dinosaurios por período
-    count_by_period = data_filtrados['period'].value_counts()
-
-    # Crear el gráfico de barras
-    grafico_periodo = go.Figure(
-        data=[
-            go.Bar(
-                x=count_by_period.index,
-                y=count_by_period,
-                name="Cantidad de Dinosaurios"
-            )
-        ],
-        layout={
-            "title": "Cantidad de Dinosaurios por Período",
-            "xaxis": {"title": "Período Geológico"},
-            "yaxis": {"title": "Cantidad"},
-        },
-    )
-    return grafico_periodo
+    return fig
 
 
 # Ejecutar la aplicación
