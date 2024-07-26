@@ -18,7 +18,7 @@ bg_color = "black"
 
 # Estilos de botón Tailwind
 main_button = "relative inline-flex items-center justify-center p-0.5 mb-2 me-2 overflow-hidden text-sm font-medium text-gray-900 rounded-lg group bg-gradient-to-br from-teal-300 to-lime-300 group-hover:from-teal-300 group-hover:to-lime-300 dark:text-white dark:hover:text-gray-900 focus:ring-4 focus:outline-none focus:ring-lime-200 dark:focus:ring-lime-800"
-main_button_span = "relative px-5 py-2.5 transition-all ease-in duration-75 bg-white dark:bg-gray-900 rounded-md group-hover:bg-opacity-0 hover:font-bold"
+main_button_span = "text-xl relative px-5 py-2.5 transition-all ease-in duration-75 bg-white dark:bg-gray-900 rounded-md group-hover:bg-opacity-0 hover:font-bold"
 
 # Definir el diseño del layout
 app = dash.Dash(__name__, external_scripts=external_scripts)
@@ -49,8 +49,7 @@ unique_periods = list(data["period"].unique())
 app.layout = html.Div(
     className="container",
     children=[
-        html.H1("Dinosaur Data Analysis 🦕", className="text-xl"),  # Encabezado blanco
-        # Botones
+        html.H1("Dinosaur Data Analysis 🦕", className="text-5xl text-white mt-4 mb-6"),
         html.Div(
             [
                 html.Button(
