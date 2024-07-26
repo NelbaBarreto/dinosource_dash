@@ -17,7 +17,7 @@ external_scripts = [
 bg_color = "black"
 
 # Estilos de botón Tailwind
-main_button = "relative inline-flex items-center justify-center p-0.5 mb-2 me-2 overflow-hidden text-sm font-medium text-gray-900 rounded-lg group bg-gradient-to-br from-teal-300 to-lime-300 group-hover:from-teal-300 group-hover:to-lime-300 dark:text-white dark:hover:text-gray-900 focus:ring-4 focus:outline-none focus:ring-lime-200 dark:focus:ring-lime-800"
+main_button = "relative inline-flex items-center justify-center p-0.5 mb-2 me-2 overflow-hidden text-sm font-medium text-gray-900 rounded-lg group bg-gradient-to-br from-teal-300 to-lime-300 group-hover:from-teal-300 group-hover:to-lime-300 dark:text-white dark:hover:text-gray-900 focus:ring-4 focus:outline-none"
 main_button_span = "text-xl relative px-5 py-2.5 transition-all ease-in duration-75 bg-white dark:bg-gray-900 rounded-md group-hover:bg-opacity-0 hover:font-bold"
 
 # Definir el diseño del layout
@@ -56,13 +56,13 @@ app.layout = html.Div(
                     id="btn-overview",
                     n_clicks=0,
                     className=main_button,
-                    children=html.Span("Overview", className=main_button_span)
+                    children=html.Span("Overview", className=main_button_span),
                 ),
                 html.Button(
                     id="btn-periodo",
                     n_clicks=0,
                     className=main_button,
-                    children=html.Span("Periodo", className=main_button_span)
+                    children=html.Span("Periodo", className=main_button_span),
                 ),
             ]
         ),
@@ -74,7 +74,12 @@ app.layout = html.Div(
 
 # Gráfico de cantidad de dinosaurios por tipo de dieta
 def dino_count_by_diet():
-    fig = go.Figure(data=[go.Histogram(x=data["diet"])])
+    fig = go.Figure(
+        data=[go.Histogram(x=data["diet"], texttemplate="%{y}", textfont_size=15)],
+        layout=dict(
+            barcornerradius=15,
+        ),
+    )
     fig.update_layout(
         title="Cantidad de Dinosaurios por Tipo de Dieta",
         plot_bgcolor=bg_color,
@@ -87,7 +92,12 @@ def dino_count_by_diet():
 
 # Gráfico de cantidad de dinosaurios por periodo
 def dino_count_by_period():
-    fig = go.Figure(data=[go.Histogram(x=data["period"])])
+    fig = go.Figure(
+        data=[go.Histogram(x=data["period"])],
+        layout=dict(
+            barcornerradius=15,
+        ),
+    )
     fig.update_layout(
         title="Cantidad de Dinosaurios por Período",
         xaxis_title="Período",
