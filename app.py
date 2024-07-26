@@ -44,12 +44,14 @@ data["period"] = data["full_period"].apply(substr_till_second_space)
 
 # Listar los valores únicos de los periodos del dataset
 unique_periods = list(data["period"].unique())
+unique_periods.insert(0, "All")
+periods = [{"label": period, "value": period} for period in unique_periods]
 
 # Diseño del la aplicación
 app.layout = html.Div(
     className="container",
     children=[
-        html.H1("Dinosaur Data Analysis 🦕", className="text-5xl text-white mt-4 mb-6"),
+        html.H1("Dinosaur Data Analysis 🦕", className="text-5xl text-white mt-4 mb-6 text-center"),
         html.Div(
             [
                 html.Button(
@@ -66,8 +68,14 @@ app.layout = html.Div(
                 ),
             ]
         ),
-        # Espacio para el gráfico (se actualiza dinámicamente)
-        dcc.Graph(id="grafico-dinosaurios"),
+        html.Div(
+            [
+                html.H2("Choose a Period:", className="text-white text-xl my-4"),
+                html.Div(id="dropdown-container"),
+                dcc.Graph(id="grafico-dinosaurios"),
+            ],
+            className="p-20",
+        ),
     ],
 )
 
@@ -81,7 +89,7 @@ def dino_count_by_diet():
         ),
     )
     fig.update_layout(
-        title="Cantidad de Dinosaurios por Tipo de Dieta",
+        title="Number of Dinosaurs by Diet Type",
         plot_bgcolor=bg_color,
         paper_bgcolor=bg_color,
         font_color="#ffffff",
@@ -93,14 +101,14 @@ def dino_count_by_diet():
 # Gráfico de cantidad de dinosaurios por periodo
 def dino_count_by_period():
     fig = go.Figure(
-        data=[go.Histogram(x=data["period"])],
+        data=[go.Histogram(x=data["period"], texttemplate="%{y}", textfont_size=15)],
         layout=dict(
             barcornerradius=15,
         ),
     )
     fig.update_layout(
-        title="Cantidad de Dinosaurios por Período",
-        xaxis_title="Período",
+        title="Number of Dinosaurs by Period",
+        xaxis_title="Periodo",
         yaxis_title="Cantidad",
         plot_bgcolor=bg_color,
         paper_bgcolor=bg_color,
@@ -122,7 +130,6 @@ def actualizar_grafico(n_clicks_overview, n_clicks_periodo):
     # Lógica para actualizar el gráfico según el botón presionado
     if boton_presionado == "btn-overview":
         fig = dino_count_by_diet()
-
     elif boton_presionado == "btn-periodo":
         fig = dino_count_by_period()
 
@@ -130,6 +137,21 @@ def actualizar_grafico(n_clicks_overview, n_clicks_periodo):
         fig = dino_count_by_diet()
 
     return fig
+
+
+@app.callback(
+    Output("dropdown-container", "children"),
+    [Input("btn-periodo", "n_clicks")],
+)
+def agregar_dropdown(n_clicks_periodo):
+    dropdown = dcc.Dropdown(
+        id="dropdown-period",
+        options=periods,
+        value="All",
+        className="w-1/2",
+    )
+
+    return dropdown
 
 
 # Ejecutar la aplicación
