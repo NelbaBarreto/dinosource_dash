@@ -5,8 +5,23 @@ from dash.dependencies import Input, Output
 import plotly.graph_objects as go
 import pandas as pd
 
+# call the ability to add external scripts
+external_scripts = [
+    # add the tailwind cdn url hosting the files with the utility classes
+    {"src": "https://cdn.tailwindcss.com"}
+]
+
+########################################
+#               Estilos
+########################################
+bg_color = "black"
+
+# Estilos de botón Tailwind
+main_button = "relative inline-flex items-center justify-center p-0.5 mb-2 me-2 overflow-hidden text-sm font-medium text-gray-900 rounded-lg group bg-gradient-to-br from-teal-300 to-lime-300 group-hover:from-teal-300 group-hover:to-lime-300 dark:text-white dark:hover:text-gray-900 focus:ring-4 focus:outline-none focus:ring-lime-200 dark:focus:ring-lime-800"
+main_button_span = "relative px-5 py-2.5 transition-all ease-in duration-75 bg-white dark:bg-gray-900 rounded-md group-hover:bg-opacity-0 hover:font-bold"
+
 # Definir el diseño del layout
-app = dash.Dash(__name__)
+app = dash.Dash(__name__, external_scripts=external_scripts)
 data = pd.read_csv(
     "https://raw.githubusercontent.com/NelbaBarreto/programacion-ciencias-datos/main/data/dinosaurs_dataset.csv"
 )
@@ -30,43 +45,25 @@ data["period"] = data["full_period"].apply(substr_till_second_space)
 # Listar los valores únicos de los periodos del dataset
 unique_periods = list(data["period"].unique())
 
-bg_color = "black"
-button_color = "#50c6a4"
-
-# Estilos CSS para el fondo de color
-styles = {
-    "background": bg_color,
-    "textColor": "#ffffff",  # Color de texto blanco
-    "fontFamily": "sans-serif",
-    "textAlign": "center",
-    "minHeight": "100vh"
-}
-
-main_buttons_styles = {
-    "borderRadius": "10px",
-    "padding": "20px",
-    "marginInline": "5px",
-    "fontWeight": "bold",
-    "backgroundColor": button_color,
-    "cursor": "pointer",
-    "border": "0px"
-}
-
 # Diseño del la aplicación
 app.layout = html.Div(
-    style=styles,
+    className="container",
     children=[
-        html.H1(
-            "Dinosaur Data Analysis 🦕", style={"color": "white"}
-        ),  # Encabezado blanco
+        html.H1("Dinosaur Data Analysis 🦕", className="text-xl"),  # Encabezado blanco
         # Botones
         html.Div(
             [
                 html.Button(
-                    "Overview", id="btn-overview", n_clicks=0, style=main_buttons_styles
+                    id="btn-overview",
+                    n_clicks=0,
+                    className=main_button,
+                    children=html.Span("Overview", className=main_button_span)
                 ),
                 html.Button(
-                    "Periodo", id="btn-periodo", n_clicks=0, style=main_buttons_styles
+                    id="btn-periodo",
+                    n_clicks=0,
+                    className=main_button,
+                    children=html.Span("Periodo", className=main_button_span)
                 ),
             ]
         ),
@@ -74,6 +71,34 @@ app.layout = html.Div(
         dcc.Graph(id="grafico-dinosaurios"),
     ],
 )
+
+
+# Gráfico de cantidad de dinosaurios por tipo de dieta
+def dino_count_by_diet():
+    fig = go.Figure(data=[go.Histogram(x=data["diet"])])
+    fig.update_layout(
+        title="Cantidad de Dinosaurios por Tipo de Dieta",
+        plot_bgcolor=bg_color,
+        paper_bgcolor=bg_color,
+        font_color="#ffffff",
+    )
+
+    return fig
+
+
+# Gráfico de cantidad de dinosaurios por periodo
+def dino_count_by_period():
+    fig = go.Figure(data=[go.Histogram(x=data["period"])])
+    fig.update_layout(
+        title="Cantidad de Dinosaurios por Período",
+        xaxis_title="Período",
+        yaxis_title="Cantidad",
+        plot_bgcolor=bg_color,
+        paper_bgcolor=bg_color,
+        font_color="#ffffff",
+    )
+
+    return fig
 
 
 # Callback para manejar el click en los botones
@@ -87,37 +112,13 @@ def actualizar_grafico(n_clicks_overview, n_clicks_periodo):
 
     # Lógica para actualizar el gráfico según el botón presionado
     if boton_presionado == "btn-overview":
-        # Lógica para el gráfico de Overview
-        fig = go.Figure(data=[go.Scatter(x=data["name"], y=data.index, mode="markers")])
-        fig.update_layout(
-            title="Overview de Dinosaurios",
-            plot_bgcolor=bg_color,
-            paper_bgcolor=bg_color,
-            font_color="#ffffff",
-        )
+        fig = dino_count_by_diet()
 
     elif boton_presionado == "btn-periodo":
-        # Lógica para el gráfico por Período
-        count_by_period = data["period"].value_counts()
-        fig = go.Figure(data=[go.Bar(x=count_by_period.index, y=count_by_period)])
-        fig.update_layout(
-            title="Cantidad de Dinosaurios por Período",
-            xaxis_title="Período",
-            yaxis_title="Cantidad",
-            plot_bgcolor=bg_color,
-            paper_bgcolor=bg_color,
-            font_color="#ffffff",
-        )
+        fig = dino_count_by_period()
 
     else:
-        # Por defecto, mostrar el gráfico de Overview
-        fig = go.Figure(data=[go.Scatter(x=data["name"], y=data.index, mode="markers")])
-        fig.update_layout(
-            title="Overview de Dinosaurios",
-            plot_bgcolor=bg_color,
-            paper_bgcolor=bg_color,
-            font_color="#ffffff",
-        )
+        fig = dino_count_by_diet()
 
     return fig
 
