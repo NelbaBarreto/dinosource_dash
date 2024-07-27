@@ -44,14 +44,14 @@ data["period"] = data["full_period"].apply(substr_till_second_space)
 
 # Listar los valores únicos de los periodos del dataset
 unique_periods = list(data["period"].unique())
-unique_periods.insert(0, "All")
+unique_periods.insert(0, "Todos")
 periods = [{"label": period, "value": period} for period in unique_periods]
 
 # Diseño del la aplicación
 app.layout = html.Div(
     className="container",
     children=[
-        html.H1("Dinosaur Data Analysis 🦕", className="text-5xl text-white mt-4 mb-6 text-center"),
+        html.H1("Análisis de Datos de Dinosaurios 🦕", className="text-5xl text-white mt-4 mb-6 text-center"),
         html.Div(
             [
                 html.Button(
@@ -66,11 +66,12 @@ app.layout = html.Div(
                     className=main_button,
                     children=html.Span("Periodo", className=main_button_span),
                 ),
-            ]
+            ],
+            className="flex justify-center"
         ),
         html.Div(
             [
-                html.H2("Choose a Period:", className="text-white text-xl my-4"),
+                html.H2("Elegir un Periodo:", className="text-lime-400 font-semibold mb-2 text-sm"),
                 html.Div(id="dropdown-container"),
                 dcc.Graph(id="grafico-dinosaurios"),
             ],
@@ -89,7 +90,9 @@ def dino_count_by_diet():
         ),
     )
     fig.update_layout(
-        title="Number of Dinosaurs by Diet Type",
+        title="Cantidad de Dinosaurios por Tipo de Dieta",
+        xaxis_title="Tipo de Dieta",
+        yaxis_title="Cantidad",
         plot_bgcolor=bg_color,
         paper_bgcolor=bg_color,
         font_color="#ffffff",
@@ -107,7 +110,7 @@ def dino_count_by_period():
         ),
     )
     fig.update_layout(
-        title="Number of Dinosaurs by Period",
+        title="Cantidad de Dinosaurios por Periodo",
         xaxis_title="Periodo",
         yaxis_title="Cantidad",
         plot_bgcolor=bg_color,
@@ -147,7 +150,7 @@ def agregar_dropdown(n_clicks_periodo):
     dropdown = dcc.Dropdown(
         id="dropdown-period",
         options=periods,
-        value="All",
+        value="Todos",
         className="w-1/2",
     )
 
