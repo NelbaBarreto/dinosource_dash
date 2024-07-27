@@ -3,6 +3,7 @@ from dash import dcc
 from dash import html
 from dash.dependencies import Input, Output, State
 import plotly.graph_objects as go
+from plotly.subplots import make_subplots
 import pandas as pd
 
 # call the ability to add external scripts
@@ -28,7 +29,6 @@ data["length"] = data["length"].astype(float)
 
 data.loc[data["period"] == "USA", "period"] = "Late Cretaceous"
 
-
 def substr_till_second_space(s):
     parts = s.split(" ")
     return " ".join(parts[:2])
@@ -40,8 +40,14 @@ data["period"] = data["full_period"].apply(substr_till_second_space)
 unique_periods = list(data["period"].unique())
 unique_periods.insert(0, "Todos")
 periods = [{"label": period, "value": period} for period in unique_periods]
+# Obtener cantidad total de dinosaurios
 total_count = len(data)
+# Obtener cantidad total de países
 total_country_count = len(data.groupby("lived_in"))
+# Obtener cantidad total de periodos
+total_period_count = len(data.groupby("period"))
+# Obtener top 10 de dinosaurios por longitud
+dino_top_ten = data.nlargest(10, "length").sort_values(by="length", ascending=False)
 
 # Main layout
 app.layout = html.Div(
@@ -111,6 +117,23 @@ def layout_overview():
                 ],
                 className=tile,
             ),
+            html.Div(
+                [
+                    html.Div(
+                        [
+                            html.Img(
+                                src=app.get_asset_url("icons8-rock-100.png"),
+                                className="mx-auto w-14 h-14 mb-2",
+                            ),
+                            html.Span(total_period_count),
+                            html.Br(),
+                            html.Span("Periodos"),
+                        ],
+                        className="text-center",
+                    )
+                ],
+                className=tile,
+            ),            
             dcc.Graph(id="grafico-dinosaurios", figure=dino_count_by_diet()),
         ]
     )
@@ -133,21 +156,28 @@ def layout_periodo():
         ]
     )
 
-
-# Graph for dinosaur count by diet
+# Gráficos de la pantalla de Overview
 def dino_count_by_diet():
-    fig = go.Figure(
-        data=[go.Histogram(x=data["diet"], texttemplate="%{y}", textfont_size=15)],
-        layout=dict(
-            barcornerradius=15,
-        ),
-    )
+    fig = make_subplots(rows=1, cols=2, subplot_titles=("Cantidad de Dinosaurios por Tipo de Dieta", "Top de Dinosaurios por Longitud (Descendente)"))
+    
     fig.update_layout(
-        title="Cantidad de Dinosaurios por Tipo de Dieta",
         plot_bgcolor=bg_color,
         paper_bgcolor=bg_color,
         font_color="#ffffff",
     )
+    
+    # Cantidad de Dinosaurios por Tipo de Dieta
+    fig1 = go.Histogram(x=data["diet"], texttemplate="%{y}", textfont_size=15)
+
+    # Top de Dinosaurios por Longitud
+    # fig2 = go.Histogram(x=dino_top_ten["name"], texttemplate="%{y}", textfont_size=15)  
+    fig2 = go.Bar(y=dino_top_ten["length"], x=dino_top_ten["name"])  
+    
+    # Agregar gráficos a la figura principal
+    fig.add_trace(fig1, row=1, col=1)
+    fig.add_trace(fig2, row=1, col=2)
+    fig.update_layout(showlegend=False)
+
     return fig
 
 
