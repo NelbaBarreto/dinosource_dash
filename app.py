@@ -29,6 +29,7 @@ data["length"] = data["length"].astype(float)
 
 data.loc[data["period"] == "USA", "period"] = "Late Cretaceous"
 
+
 def substr_till_second_space(s):
     parts = s.split(" ")
     return " ".join(parts[:2])
@@ -48,6 +49,50 @@ total_country_count = len(data.groupby("lived_in"))
 total_period_count = len(data.groupby("period"))
 # Obtener top 10 de dinosaurios por longitud
 dino_top_ten = data.nlargest(10, "length").sort_values(by="length", ascending=False)
+# Obtener cantidad de dinosaurios por país y agregar el código de país
+# según ISO 3166-1 alpha-3
+iso_data = {
+    "South Africa": "ZAF",
+    "Argentina": "ARG",
+    "USA": "USA",
+    "Mongolia": "MNG",
+    "Egypt": "EGY",
+    "Niger": "NER",
+    "China": "CHN",
+    "Canada": "CAN",
+    "France": "FRA",
+    "Uruguay": "URY",
+    "Spain": "ESP",
+    "Kazakhstan": "KAZ",
+    "Germany": "DEU",
+    "Uzbekistan": "UZB",
+    "Australia": "AUS",
+    "India": "IND",
+    "United Kingdom": "GBR",
+    "North Africa": "NAF",  # Custom code for North Africa
+    "Zimbabwe": "ZWE",
+    "Antarctica": "ATA",
+    "Morocco": "MAR",
+    "Tanzania": "TZA",
+    "Japan": "JPN",
+    "Brazil": "BRA",
+    "Madagascar": "MDG",
+    "Lesotho": "LSO",
+    "Romania": "ROU",
+    "Malawi": "MWI",
+    "Tunisia": "TUN",
+    "Russia": "RUS",
+    "Wales": "GB-WLS",  # Custom code for Wales
+    "Switzerland": "CHE",
+}
+
+# Convertir el diccionario a un dataframe
+iso_df = pd.DataFrame.from_dict(iso_data, orient="index").reset_index()
+iso_df.columns = ["lived_in", "country_iso_code"]
+# Crear un dataframe de cantidad de dinosaurios por país
+dino_count_by_country = data["lived_in"].value_counts().sort_values().reset_index()
+# Merge
+dino_count_by_country = dino_count_by_country.merge(iso_df, on="lived_in", how="left")
 
 # Main layout
 app.layout = html.Div(
@@ -133,8 +178,9 @@ def layout_overview():
                     )
                 ],
                 className=tile,
-            ),            
-            dcc.Graph(id="grafico-dinosaurios", figure=dino_count_by_diet()),
+            ),
+            dcc.Graph(id="grafico-dinosaurios", figure=dino_overview_row1()),
+            dcc.Graph(id="grafico-dinosaurios-2", figure=dino_overview_row2()),
         ]
     )
 
@@ -156,27 +202,64 @@ def layout_periodo():
         ]
     )
 
+
 # Gráficos de la pantalla de Overview
-def dino_count_by_diet():
-    fig = make_subplots(rows=1, cols=2, subplot_titles=("Cantidad de Dinosaurios por Tipo de Dieta", "Top de Dinosaurios por Longitud (Descendente)"))
-    
+def dino_overview_row1():
+    fig = make_subplots(
+        rows=1,
+        cols=2,
+        subplot_titles=(
+            "Cantidad de Dinosaurios por Tipo de Dieta",
+            "Top de Dinosaurios por Longitud (Descendente)",
+        ),
+    )
+
     fig.update_layout(
         plot_bgcolor=bg_color,
         paper_bgcolor=bg_color,
         font_color="#ffffff",
     )
-    
+
     # Cantidad de Dinosaurios por Tipo de Dieta
     fig1 = go.Histogram(x=data["diet"], texttemplate="%{y}", textfont_size=15)
 
     # Top de Dinosaurios por Longitud
-    # fig2 = go.Histogram(x=dino_top_ten["name"], texttemplate="%{y}", textfont_size=15)  
-    fig2 = go.Bar(y=dino_top_ten["length"], x=dino_top_ten["name"])  
-    
+    fig2 = go.Bar(y=dino_top_ten["length"], x=dino_top_ten["name"])
+
     # Agregar gráficos a la figura principal
     fig.add_trace(fig1, row=1, col=1)
     fig.add_trace(fig2, row=1, col=2)
     fig.update_layout(showlegend=False)
+
+    return fig
+
+
+# Gráficos de la pantalla de Overview
+def dino_overview_row2():
+    # Distribución Geográfica de los Dinosaurios
+    fig1 = go.Choropleth(
+        locations=dino_count_by_country["country_iso_code"],
+        z=dino_count_by_country["count"],
+        text=dino_count_by_country["lived_in"],
+        colorscale="Reds",
+        autocolorscale=False,
+        marker_line_color="black",
+        marker_line_width=0.5,
+        colorbar_title="Cantidad",
+    )
+
+    fig = go.Figure(
+        data=[fig1],
+    )
+
+    fig.update_layout(
+        title="Distribución Geográfica",
+        plot_bgcolor=bg_color,
+        paper_bgcolor=bg_color,
+        font_color="#ffffff",
+        width=1200,
+        height=800,
+    )
 
     return fig
 
