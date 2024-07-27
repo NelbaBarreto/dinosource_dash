@@ -38,6 +38,10 @@ def substr_till_second_space(s):
 data["full_period"] = data["period"]
 data["period"] = data["full_period"].apply(substr_till_second_space)
 
+# Corregir los valores de la columna "lived_in"
+data.loc[data["lived_in"] == "North Africa", "lived_in"] = "Algeria"
+data.loc[data["lived_in"] == "Wales", "lived_in"] = "United Kingdom"
+
 unique_periods = list(data["period"].unique())
 unique_periods.insert(0, "Todos")
 periods = [{"label": period, "value": period} for period in unique_periods]
@@ -53,6 +57,7 @@ dino_top_ten = data.nlargest(10, "length").sort_values(by="length", ascending=Fa
 # según ISO 3166-1 alpha-3
 iso_data = {
     "South Africa": "ZAF",
+    "Algeria": "DZA",
     "Argentina": "ARG",
     "USA": "USA",
     "Mongolia": "MNG",
@@ -69,7 +74,6 @@ iso_data = {
     "Australia": "AUS",
     "India": "IND",
     "United Kingdom": "GBR",
-    "North Africa": "NAF",  # Custom code for North Africa
     "Zimbabwe": "ZWE",
     "Antarctica": "ATA",
     "Morocco": "MAR",
@@ -82,7 +86,6 @@ iso_data = {
     "Malawi": "MWI",
     "Tunisia": "TUN",
     "Russia": "RUS",
-    "Wales": "GB-WLS",  # Custom code for Wales
     "Switzerland": "CHE",
 }
 
@@ -91,7 +94,6 @@ iso_df = pd.DataFrame.from_dict(iso_data, orient="index").reset_index()
 iso_df.columns = ["lived_in", "country_iso_code"]
 # Crear un dataframe de cantidad de dinosaurios por país
 dino_count_by_country = data["lived_in"].value_counts().sort_values().reset_index()
-# Merge
 dino_count_by_country = dino_count_by_country.merge(iso_df, on="lived_in", how="left")
 
 # Main layout
@@ -229,6 +231,13 @@ def dino_overview_row1():
     # Agregar gráficos a la figura principal
     fig.add_trace(fig1, row=1, col=1)
     fig.add_trace(fig2, row=1, col=2)
+
+    # Update x and y axes titles
+    fig.update_xaxes(title_text="Tipo de Dieta", row=1, col=1)
+    fig.update_yaxes(title_text="Cantidad", row=1, col=1)
+
+    fig.update_yaxes(title_text="Longitud (m)", row=1, col=2)
+        
     fig.update_layout(showlegend=False)
 
     return fig
