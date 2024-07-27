@@ -20,6 +20,9 @@ tile = "relative inline-flex items-center justify-center py-1 px-10 mb-2 me-2 ov
 app = dash.Dash(
     __name__, external_scripts=external_scripts, suppress_callback_exceptions=True
 )
+
+server = app.server
+
 data = pd.read_csv(
     "https://raw.githubusercontent.com/NelbaBarreto/programacion-ciencias-datos/main/data/dinosaurs_dataset.csv"
 )
