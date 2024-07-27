@@ -226,7 +226,7 @@ def dino_overview_row1():
     fig1 = go.Histogram(x=data["diet"], texttemplate="%{y}", textfont_size=15)
 
     # Top de Dinosaurios por Longitud
-    fig2 = go.Bar(y=dino_top_ten["length"], x=dino_top_ten["name"])
+    fig2 = go.Bar(y=dino_top_ten["length"], x=dino_top_ten["name"], texttemplate="%{y}", textfont_size=15)
 
     # Agregar gráficos a la figura principal
     fig.add_trace(fig1, row=1, col=1)
