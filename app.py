@@ -101,7 +101,7 @@ dino_count_by_country = dino_count_by_country.merge(iso_df, on="lived_in", how="
 
 # Main layout
 app.layout = html.Div(
-    className="container",
+    className="container m-auto",
     children=[
         html.H1(
             "Análisis de Datos de Dinosaurios 🦕",
@@ -124,7 +124,7 @@ app.layout = html.Div(
             ],
             className="flex justify-center",
         ),
-        html.Div(id="page-content", className="p-20"),
+        html.Div(id="page-content", className="lg:p-10 p-2"),
     ],
 )
 
@@ -193,14 +193,21 @@ def layout_overview():
                 children=[
                     dcc.Graph(id="grafico-dieta", figure=dino_overview_count_by_diet()),
                     dcc.Graph(
-                        id="grafifico-top-longitud",
+                        id="grafico-top-longitud",
                         figure=dino_overview_top_by_length(),
                     ),
                 ],
-                className="grid xl:grid-cols-2 grid-cols-1",
+                className="grid xl:grid-cols-2 grid-cols-1 w-screen xl:w-full",
             ),
-            dcc.Graph(id="grafico-dinosaurios-2", figure=dino_overview_row2()),
-        ]
+            html.Div(
+                children=[
+                    dcc.Graph(
+                        id="grafico-distribucion", responsive=True, figure=dino_overview_by_country()
+                    ),
+                ],
+                className="w-full",
+            ),
+        ],
     )
 
 
@@ -263,15 +270,15 @@ def dino_overview_top_by_length():
         plot_bgcolor=bg_color,
         paper_bgcolor=bg_color,
         font_color="#ffffff",
-        xaxis_title="Longitud (m)",
-        yaxis_title="Cantidad",
+        xaxis_title="Dinosaurio",
+        yaxis_title="Longitud (m)",
     )
 
     return fig
 
 
 # Gráficos de la pantalla de Overview
-def dino_overview_row2():
+def dino_overview_by_country():
     # Distribución Geográfica de los Dinosaurios
     fig1 = go.Choropleth(
         locations=dino_count_by_country["country_iso_code"],
@@ -293,8 +300,6 @@ def dino_overview_row2():
         plot_bgcolor=bg_color,
         paper_bgcolor=bg_color,
         font_color="#ffffff",
-        width=1200,
-        height=800,
     )
 
     return fig
