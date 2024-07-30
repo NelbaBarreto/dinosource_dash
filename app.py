@@ -12,8 +12,8 @@ external_scripts = [{"src": "https://cdn.tailwindcss.com"}]
 # Styles
 bg_color = "black"
 
-main_button = "relative inline-flex items-center justify-center p-1 mb-2 me-2 overflow-hidden text-sm font-medium text-gray-900 rounded-lg group bg-gradient-to-br from-teal-300 to-lime-300 group-hover:from-teal-300 group-hover:to-lime-300 focus:ring-4 focus:outline-none"
-main_button_span = "text-xl relative px-5 py-2.5 transition-all ease-in duration-75 bg-white rounded-md group-hover:bg-opacity-0 hover:font-bold"
+main_button = "relative inline-flex items-center justify-center p-1 mb-2 me-2 overflow-hidden text-sm text-gray-900 rounded-lg group bg-gradient-to-br from-teal-300 to-lime-300 group-hover:from-teal-300 group-hover:to-lime-300 focus:ring-4 focus:outline-none"
+main_button_span = "text-xl relative px-5 py-2.5 transition-all ease-in duration-75 bg-white rounded-md font-semibold group-hover:bg-opacity-0 hover:font-bold"
 tile = "relative inline-flex items-center justify-center py-1 px-10 mb-2 me-2 overflow-hidden text-lg font-bold text-gray-900 rounded-lg group bg-gradient-to-br from-teal-300 to-lime-300 group-hover:from-teal-300 group-hover:to-lime-300"
 
 # Initialize the app
@@ -134,55 +134,60 @@ def layout_overview():
     return html.Div(
         [
             html.Div(
-                [
+                children=[
                     html.Div(
                         [
-                            html.Img(
-                                src=app.get_asset_url("icons8-dino-67.png"),
-                                className="mx-auto w-14 h-14 mb-2",
-                            ),
-                            html.Span(total_count),
-                            html.Br(),
-                            html.Span("Dinosaurios"),
+                            html.Div(
+                                [
+                                    html.Img(
+                                        src=app.get_asset_url("icons8-dino-67.png"),
+                                        className="mx-auto w-14 h-14 mb-2",
+                                    ),
+                                    html.Span(total_count),
+                                    html.Br(),
+                                    html.Span("Dinosaurios"),
+                                ],
+                                className="text-center",
+                            )
                         ],
-                        className="text-center",
-                    )
-                ],
-                className=tile,
-            ),
-            html.Div(
-                [
+                        className=tile,
+                    ),
                     html.Div(
                         [
-                            html.Img(
-                                src=app.get_asset_url("icons8-earth-100.png"),
-                                className="mx-auto w-14 h-14 mb-2",
-                            ),
-                            html.Span(total_country_count),
-                            html.Br(),
-                            html.Span("Países"),
+                            html.Div(
+                                [
+                                    html.Img(
+                                        src=app.get_asset_url("icons8-earth-100.png"),
+                                        className="mx-auto w-14 h-14 mb-2",
+                                    ),
+                                    html.Span(total_country_count),
+                                    html.Br(),
+                                    html.Span("Países"),
+                                ],
+                                className="text-center",
+                            )
                         ],
-                        className="text-center",
-                    )
-                ],
-                className=tile,
-            ),
-            html.Div(
-                [
+                        className=tile,
+                    ),
                     html.Div(
                         [
-                            html.Img(
-                                src=app.get_asset_url("icons8-rock-100.png"),
-                                className="mx-auto w-14 h-14 mb-2",
-                            ),
-                            html.Span(total_period_count),
-                            html.Br(),
-                            html.Span("Periodos"),
+                            html.Div(
+                                [
+                                    html.Img(
+                                        src=app.get_asset_url("icons8-rock-100.png"),
+                                        className="mx-auto w-14 h-14 mb-2",
+                                    ),
+                                    html.Span(total_period_count),
+                                    html.Br(),
+                                    html.Span("Periodos"),
+                                ],
+                                className="text-center",
+                            )
                         ],
-                        className="text-center",
-                    )
+                        className=tile,
+                    ),
                 ],
-                className=tile,
+                className="grid md:grid-cols-3 grid-cols-1",
             ),
             dcc.Graph(id="grafico-dinosaurios", figure=dino_overview_row1()),
             dcc.Graph(id="grafico-dinosaurios-2", figure=dino_overview_row2()),
@@ -229,7 +234,12 @@ def dino_overview_row1():
     fig1 = go.Histogram(x=data["diet"], texttemplate="%{y}", textfont_size=15)
 
     # Top de Dinosaurios por Longitud
-    fig2 = go.Bar(y=dino_top_ten["length"], x=dino_top_ten["name"], texttemplate="%{y}", textfont_size=15)
+    fig2 = go.Bar(
+        y=dino_top_ten["length"],
+        x=dino_top_ten["name"],
+        texttemplate="%{y}",
+        textfont_size=15,
+    )
 
     # Agregar gráficos a la figura principal
     fig.add_trace(fig1, row=1, col=1)
@@ -240,7 +250,7 @@ def dino_overview_row1():
     fig.update_yaxes(title_text="Cantidad", row=1, col=1)
 
     fig.update_yaxes(title_text="Longitud (m)", row=1, col=2)
-        
+
     fig.update_layout(showlegend=False)
 
     return fig
