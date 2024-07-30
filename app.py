@@ -3,7 +3,7 @@ from dash import dcc
 from dash import html
 from dash.dependencies import Input, Output, State
 import plotly.graph_objects as go
-from plotly.subplots import make_subplots
+import plotly.express as px
 import pandas as pd
 
 # call the ability to add external scripts
@@ -14,7 +14,7 @@ bg_color = "black"
 
 main_button = "relative inline-flex items-center justify-center p-1 mb-2 me-2 overflow-hidden text-sm text-gray-900 rounded-lg group bg-gradient-to-br from-teal-300 to-lime-300 group-hover:from-teal-300 group-hover:to-lime-300 focus:ring-4 focus:outline-none"
 main_button_span = "text-xl relative px-5 py-2.5 transition-all ease-in duration-75 bg-white rounded-md font-semibold group-hover:bg-opacity-0 hover:font-bold"
-tile = "relative inline-flex items-center justify-center py-1 px-10 mb-2 me-2 overflow-hidden text-lg font-bold text-gray-900 rounded-lg group bg-gradient-to-br from-teal-300 to-lime-300 group-hover:from-teal-300 group-hover:to-lime-300"
+tile = "relative inline-flex items-center justify-center p-2 mb-2 me-2 overflow-hidden text-lg font-bold text-gray-900 rounded-lg group bg-gradient-to-br from-teal-300 to-lime-300 group-hover:from-teal-300 group-hover:to-lime-300"
 
 # Initialize the app
 app = dash.Dash(
@@ -141,11 +141,9 @@ def layout_overview():
                                 [
                                     html.Img(
                                         src=app.get_asset_url("icons8-dino-67.png"),
-                                        className="mx-auto w-14 h-14 mb-2",
+                                        className="mx-auto sm:w-14 sm:h-14 w-10 h-10 mb-2",
                                     ),
-                                    html.Span(total_count),
-                                    html.Br(),
-                                    html.Span("Dinosaurios"),
+                                    html.Span(f"{total_count} dinosaurios"),
                                 ],
                                 className="text-center",
                             )
@@ -158,11 +156,9 @@ def layout_overview():
                                 [
                                     html.Img(
                                         src=app.get_asset_url("icons8-earth-100.png"),
-                                        className="mx-auto w-14 h-14 mb-2",
+                                        className="mx-auto sm:w-14 sm:h-14 w-10 h-10 mb-2",
                                     ),
-                                    html.Span(total_country_count),
-                                    html.Br(),
-                                    html.Span("Países"),
+                                    html.Span(f"{total_country_count} países"),
                                 ],
                                 className="text-center",
                             )
@@ -175,11 +171,9 @@ def layout_overview():
                                 [
                                     html.Img(
                                         src=app.get_asset_url("icons8-rock-100.png"),
-                                        className="mx-auto w-14 h-14 mb-2",
+                                        className="mx-auto sm:w-14 sm:h-14 w-10 h-10 mb-2",
                                     ),
-                                    html.Span(total_period_count),
-                                    html.Br(),
-                                    html.Span("Periodos"),
+                                    html.Span(f"{total_period_count} periodos"),
                                 ],
                                 className="text-center",
                             )
@@ -187,7 +181,7 @@ def layout_overview():
                         className=tile,
                     ),
                 ],
-                className="grid md:grid-cols-3 grid-cols-1",
+                className="grid sm:grid-cols-3 grid-cols-1",
             ),
             html.Div(
                 children=[
@@ -287,11 +281,9 @@ def dino_overview_by_country():
         locations=dino_count_by_country["country_iso_code"],
         z=dino_count_by_country["count"],
         text=dino_count_by_country["lived_in"],
-        colorscale="Reds",
-        autocolorscale=False,
-        marker_line_color="black",
-        marker_line_width=0.5,
+        autocolorscale=False,     
         colorbar_title="Cantidad",
+        colorscale=px.colors.sequential.Plasma
     )
 
     fig = go.Figure(
