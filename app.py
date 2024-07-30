@@ -202,10 +202,13 @@ def layout_overview():
             html.Div(
                 children=[
                     dcc.Graph(
-                        id="grafico-distribucion", responsive=True, figure=dino_overview_by_country()
+                        id="grafico-distribucion",
+                        figure=dino_overview_by_country(),
+                        className="w-full",
+                        style={"height": "50vh"}
                     ),
                 ],
-                className="w-full",
+                className="flex flex-col items-center w-full",
             ),
         ],
     )
@@ -300,6 +303,8 @@ def dino_overview_by_country():
         plot_bgcolor=bg_color,
         paper_bgcolor=bg_color,
         font_color="#ffffff",
+        autosize=True,
+        margin=dict(l=0, r=0, t=50, b=0),
     )
 
     return fig
