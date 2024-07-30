@@ -189,7 +189,16 @@ def layout_overview():
                 ],
                 className="grid md:grid-cols-3 grid-cols-1",
             ),
-            dcc.Graph(id="grafico-dinosaurios", figure=dino_overview_row1()),
+            html.Div(
+                children=[
+                    dcc.Graph(id="grafico-dieta", figure=dino_overview_count_by_diet()),
+                    dcc.Graph(
+                        id="grafifico-top-longitud",
+                        figure=dino_overview_top_by_length(),
+                    ),
+                ],
+                className="grid xl:grid-cols-2 grid-cols-1",
+            ),
             dcc.Graph(id="grafico-dinosaurios-2", figure=dino_overview_row2()),
         ]
     )
@@ -214,44 +223,49 @@ def layout_periodo():
 
 
 # Gráficos de la pantalla de Overview
-def dino_overview_row1():
-    fig = make_subplots(
-        rows=1,
-        cols=2,
-        subplot_titles=(
-            "Cantidad de Dinosaurios por Tipo de Dieta",
-            "Top de Dinosaurios por Longitud (Descendente)",
-        ),
+
+
+# Cantidad de dinosaurios por tipo de dieta
+def dino_overview_count_by_diet():
+    fig1 = go.Histogram(x=data["diet"], texttemplate="%{y}", textfont_size=15)
+
+    fig = go.Figure(
+        data=[fig1],
     )
 
     fig.update_layout(
+        title="Cantidad de Dinosaurios por Tipo de Dieta",
         plot_bgcolor=bg_color,
         paper_bgcolor=bg_color,
         font_color="#ffffff",
+        xaxis_title="Tipo de Dieta",
+        yaxis_title="Cantidad",
     )
 
-    # Cantidad de Dinosaurios por Tipo de Dieta
-    fig1 = go.Histogram(x=data["diet"], texttemplate="%{y}", textfont_size=15)
+    return fig
 
-    # Top de Dinosaurios por Longitud
-    fig2 = go.Bar(
+
+# Top de Dinosaurios por Longitud
+def dino_overview_top_by_length():
+    fig1 = go.Bar(
         y=dino_top_ten["length"],
         x=dino_top_ten["name"],
         texttemplate="%{y}",
         textfont_size=15,
     )
 
-    # Agregar gráficos a la figura principal
-    fig.add_trace(fig1, row=1, col=1)
-    fig.add_trace(fig2, row=1, col=2)
+    fig = go.Figure(
+        data=[fig1],
+    )
 
-    # Update x and y axes titles
-    fig.update_xaxes(title_text="Tipo de Dieta", row=1, col=1)
-    fig.update_yaxes(title_text="Cantidad", row=1, col=1)
-
-    fig.update_yaxes(title_text="Longitud (m)", row=1, col=2)
-
-    fig.update_layout(showlegend=False)
+    fig.update_layout(
+        title="Top de Dinosaurios por Longitud (Descendente)",
+        plot_bgcolor=bg_color,
+        paper_bgcolor=bg_color,
+        font_color="#ffffff",
+        xaxis_title="Longitud (m)",
+        yaxis_title="Cantidad",
+    )
 
     return fig
 
