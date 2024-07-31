@@ -54,8 +54,15 @@ total_count = len(data)
 total_country_count = len(data.groupby("lived_in"))
 # Obtener cantidad total de periodos
 total_period_count = len(data.groupby("period"))
+
 # Obtener top 10 de dinosaurios por longitud
-dino_top_ten = data.nlargest(10, "length").sort_values(by="length", ascending=False)
+def get_dino_top_ten(ascending=False):
+    if ascending:
+        return data.nsmallest(10, "length")
+    
+    return data.nlargest(10, "length")
+
+
 # Obtener cantidad de dinosaurios por país y agregar el código de país
 # según ISO 3166-1 alpha-3
 iso_data = {
@@ -186,9 +193,21 @@ def layout_overview():
             html.Div(
                 children=[
                     dcc.Graph(id="grafico-dieta", figure=dino_overview_count_by_diet()),
-                    dcc.Graph(
-                        id="grafico-top-longitud",
-                        figure=dino_overview_top_by_length(),
+                    html.Div(
+                        children=[
+                            dcc.Graph(
+                                id="grafico-top-longitud",
+                                figure=dino_overview_top_by_length(),
+                            ),
+                            html.Button(
+                                id="btn-asc-desc",
+                                n_clicks=0,
+                                className="relative inline-flex items-center justify-center p-1 mb-2 me-2 bg-lime-300 overflow-hidden text-gray-900 font-semibold rounded-lg focus:ring-4 focus:outline-none hover:ring-4",
+                                children=html.Span(
+                                    "Cambiar a Top Ascendente ⬆️"
+                                ),
+                            ),                            
+                        ],
                     ),
                 ],
                 className="grid xl:grid-cols-2 grid-cols-1 w-screen xl:w-full",
@@ -199,7 +218,7 @@ def layout_overview():
                         id="grafico-distribucion",
                         figure=dino_overview_by_country(),
                         className="w-full",
-                        style={"height": "50vh"}
+                        style={"height": "50vh"},
                     ),
                 ],
                 className="flex flex-col items-center w-full",
@@ -236,9 +255,9 @@ def dino_overview_count_by_diet():
     fig = go.Figure(
         data=[fig1],
     )
-    
+
     fig.update_traces(marker_color=px.colors.sequential.Sunsetdark)
-    
+
     fig.update_layout(
         title="Cantidad de Dinosaurios por Tipo de Dieta",
         plot_bgcolor=bg_color,
@@ -254,7 +273,9 @@ def dino_overview_count_by_diet():
 
 
 # Top de Dinosaurios por Longitud
-def dino_overview_top_by_length():
+def dino_overview_top_by_length(ascending=False):
+    dino_top_ten = get_dino_top_ten(ascending)
+    
     fig1 = go.Bar(
         y=dino_top_ten["length"],
         x=dino_top_ten["name"],
@@ -265,18 +286,18 @@ def dino_overview_top_by_length():
     fig = go.Figure(
         data=[fig1],
     )
-    
+
     fig.update_traces(marker_color=px.colors.sequential.Sunsetdark)
-    
+
     fig.update_layout(
-        title="Top de Dinosaurios por Longitud (Descendente)",
+        title="Top de Dinosaurios por Longitud",
         plot_bgcolor=bg_color,
         paper_bgcolor=bg_color,
         font_color="#ffffff",
         xaxis_title="Dinosaurio",
         yaxis_title="Longitud (m)",
         xaxis_fixedrange=True,
-        yaxis_fixedrange=True
+        yaxis_fixedrange=True,
     )
 
     return fig
@@ -289,9 +310,9 @@ def dino_overview_by_country():
         locations=dino_count_by_country["country_iso_code"],
         z=dino_count_by_country["count"],
         text=dino_count_by_country["lived_in"],
-        autocolorscale=False,     
+        autocolorscale=False,
         colorbar_title="Cantidad",
-        colorscale=px.colors.sequential.Sunsetdark
+        colorscale=px.colors.sequential.Sunsetdark,
     )
 
     fig = go.Figure(
@@ -324,7 +345,7 @@ def dino_count_by_period(filtered_data):
             barcornerradius=15,
         ),
     )
-    
+
     fig.update_layout(
         title="Cantidad de Dinosaurios por Periodo",
         xaxis_title="Periodo",
@@ -354,6 +375,16 @@ def display_page(n_clicks_overview, n_clicks_periodo):
         elif button_id == "btn-periodo":
             return layout_periodo()
 
+@app.callback(
+    Output("grafico-top-longitud", "figure"),
+    Output("btn-asc-desc", "children"),
+    Input("btn-asc-desc", "n_clicks")
+)
+def update_top_longitud(n_clicks):
+    ascending = n_clicks % 2 == 1
+    figure = dino_overview_top_by_length(ascending)
+    button_text = "Cambiar a Top Descendente ⬇️" if ascending else "Cambiar a Top Ascendente ⬆️"
+    return figure, button_text
 
 # Callback to update the graph based on dropdown selection
 @app.callback(
