@@ -10,7 +10,7 @@ import pandas as pd
 external_scripts = [{"src": "https://cdn.tailwindcss.com"}]
 
 # Styles
-bg_color = "black"
+bg_color = "#111111"
 
 main_button = "relative inline-flex items-center justify-center p-1 mb-2 me-2 overflow-hidden text-sm text-gray-900 rounded-lg group bg-gradient-to-br from-teal-300 to-lime-300 group-hover:from-teal-300 group-hover:to-lime-300 focus:ring-4 focus:outline-none"
 main_button_span = "text-xl relative px-5 py-2.5 transition-all ease-in duration-75 bg-white rounded-md font-semibold group-hover:bg-opacity-0 hover:font-bold"
@@ -58,10 +58,11 @@ total_period_count = len(data.groupby("period"))
 # Obtener top 10 de dinosaurios por longitud
 def get_dino_top_ten(ascending=False):
     if ascending:
-        return data.nsmallest(10, "length")
+        res_data = data.nsmallest(10, "length")
+    else:
+        res_data = data.nlargest(10, "length")
     
-    return data.nlargest(10, "length")
-
+    return res_data.sort_values(by="length", ascending=(not ascending))
 
 # Obtener cantidad de dinosaurios por país y agregar el código de país
 # según ISO 3166-1 alpha-3
@@ -193,6 +194,12 @@ def layout_overview():
             html.Div(
                 children=[
                     dcc.Graph(id="grafico-dieta", figure=dino_overview_count_by_diet()),
+                    dcc.Graph(id="grafico-dieta-longitud", figure=dino_overview_length_by_diet()),
+                ],
+                className="grid xl:grid-cols-2 grid-cols-1 w-screen xl:w-full bg-[#111111] mb-2",
+            ),
+            html.Div(
+                children=[
                     html.Div(
                         children=[
                             dcc.Graph(
@@ -204,13 +211,13 @@ def layout_overview():
                                 n_clicks=0,
                                 className="relative inline-flex items-center justify-center p-1 mb-2 me-2 bg-lime-300 overflow-hidden text-gray-900 font-semibold rounded-lg focus:ring-4 focus:outline-none hover:ring-4",
                                 children=html.Span(
-                                    "Cambiar a Top Ascendente ⬆️"
+                                    "Cambiar a Top Ascendente ⬆️",
                                 ),
                             ),                            
                         ],
                     ),
                 ],
-                className="grid xl:grid-cols-2 grid-cols-1 w-screen xl:w-full",
+                className="grid xl:grid-cols-2 grid-cols-1 w-screen xl:w-full bg-[#111111] mb-2 pb-2 pl-2",
             ),
             html.Div(
                 children=[
@@ -226,7 +233,7 @@ def layout_overview():
         ],
     )
 
-
+# Gráficos de pantalla de periodo
 def layout_periodo():
     return html.Div(
         [
@@ -244,9 +251,7 @@ def layout_periodo():
         ]
     )
 
-
-# Gráficos de la pantalla de Overview
-
+# Gráficos de pantalla de overview
 
 # Cantidad de dinosaurios por tipo de dieta
 def dino_overview_count_by_diet():
@@ -271,16 +276,53 @@ def dino_overview_count_by_diet():
 
     return fig
 
+# Longitud de dinosaurios por tipo de dieta
+def dino_overview_length_by_diet():
+    # fig1 = go.Box(x=data["diet"], y=data["length"],)
+
+    # fig = go.Figure(
+    #     data=[fig1],
+    # )
+
+    # fig.update_traces(marker_color=px.colors.sequential.Sunsetdark[0])
+
+    unique_diets = data["diet"].unique()
+    colors = px.colors.sequential.Sunsetdark
+
+    fig = go.Figure()
+
+    for i, diet in enumerate(unique_diets):
+        fig.add_trace(go.Box(
+            x=data[data["diet"] == diet]["diet"],
+            y=data[data["diet"] == diet]["length"],
+            name=diet,
+            marker_color=colors[i % len(colors)]
+        ))    
+
+    fig.update_layout(
+        title="Longitud de Dinosaurios por Tipo de Dieta",
+        plot_bgcolor=bg_color,
+        paper_bgcolor=bg_color,
+        font_color="#ffffff",
+        xaxis_title="Tipo de Dieta",
+        yaxis_title="Longitud (m)",
+        xaxis_fixedrange=True,
+        yaxis_fixedrange=True,
+        xaxis={"showticklabels": False}
+    )
+
+    return fig
 
 # Top de Dinosaurios por Longitud
 def dino_overview_top_by_length(ascending=False):
     dino_top_ten = get_dino_top_ten(ascending)
     
     fig1 = go.Bar(
-        y=dino_top_ten["length"],
-        x=dino_top_ten["name"],
-        texttemplate="%{y}",
+        x=dino_top_ten["length"],
+        y=dino_top_ten["name"],
+        texttemplate="%{x} m",
         textfont_size=15,
+        orientation="h",
     )
 
     fig = go.Figure(
