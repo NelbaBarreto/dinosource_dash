@@ -55,14 +55,24 @@ total_country_count = len(data.groupby("lived_in"))
 # Obtener cantidad total de periodos
 total_period_count = len(data.groupby("period"))
 
+
 # Obtener top 10 de dinosaurios por longitud
 def get_dino_top_ten(ascending=False):
     if ascending:
         res_data = data.nsmallest(10, "length")
     else:
         res_data = data.nlargest(10, "length")
-    
+
     return res_data.sort_values(by="length", ascending=(not ascending))
+
+
+# Obtener la cantidad de dinosaurios por dieta
+def get_dino_count_by_diet():
+    return data.groupby("diet")["diet"].value_counts().reset_index()
+
+# Obtener la cantidad de dinosaurios por periodo
+def get_dino_count_by_period():
+    return data.groupby("period")["period"].value_counts().sort_values(ascending=False).reset_index()
 
 # Obtener cantidad de dinosaurios por país y agregar el código de país
 # según ISO 3166-1 alpha-3
@@ -194,7 +204,10 @@ def layout_overview():
             html.Div(
                 children=[
                     dcc.Graph(id="grafico-dieta", figure=dino_overview_count_by_diet()),
-                    dcc.Graph(id="grafico-dieta-longitud", figure=dino_overview_length_by_diet()),
+                    dcc.Graph(
+                        id="grafico-dieta-longitud",
+                        figure=dino_overview_length_by_diet(),
+                    ),
                 ],
                 className="grid xl:grid-cols-2 grid-cols-1 w-screen xl:w-full bg-[#111111] mb-2",
             ),
@@ -213,8 +226,11 @@ def layout_overview():
                                 children=html.Span(
                                     "Cambiar a Top Ascendente ⬆️",
                                 ),
-                            ),                            
+                            ),
                         ],
+                    ),
+                    dcc.Graph(
+                        id="grafico-dieta", figure=dino_overview_count_by_period()
                     ),
                 ],
                 className="grid xl:grid-cols-2 grid-cols-1 w-screen xl:w-full bg-[#111111] mb-2 pb-2 pl-2",
@@ -232,6 +248,7 @@ def layout_overview():
             ),
         ],
     )
+
 
 # Gráficos de pantalla de periodo
 def layout_periodo():
@@ -251,53 +268,55 @@ def layout_periodo():
         ]
     )
 
+
 # Gráficos de pantalla de overview
+
 
 # Cantidad de dinosaurios por tipo de dieta
 def dino_overview_count_by_diet():
-    fig1 = go.Histogram(x=data["diet"], texttemplate="%{y}", textfont_size=15)
+    dino_count = get_dino_count_by_diet()
 
     fig = go.Figure(
-        data=[fig1],
+        data=[
+            go.Pie(
+                labels=dino_count["diet"],
+                values=dino_count["count"],
+                hole=0.3,
+                hoverinfo="label+value",
+                textinfo="percent",
+                marker=dict(colors=px.colors.sequential.Sunsetdark),
+            )
+        ]
     )
-
-    fig.update_traces(marker_color=px.colors.sequential.Sunsetdark)
 
     fig.update_layout(
         title="Cantidad de Dinosaurios por Tipo de Dieta",
         plot_bgcolor=bg_color,
         paper_bgcolor=bg_color,
         font_color="#ffffff",
-        xaxis_title="Tipo de Dieta",
-        yaxis_title="Cantidad",
         xaxis_fixedrange=True,
         yaxis_fixedrange=True,
     )
 
     return fig
 
+
 # Longitud de dinosaurios por tipo de dieta
 def dino_overview_length_by_diet():
-    # fig1 = go.Box(x=data["diet"], y=data["length"],)
-
-    # fig = go.Figure(
-    #     data=[fig1],
-    # )
-
-    # fig.update_traces(marker_color=px.colors.sequential.Sunsetdark[0])
-
     unique_diets = data["diet"].unique()
     colors = px.colors.sequential.Sunsetdark
 
     fig = go.Figure()
 
     for i, diet in enumerate(unique_diets):
-        fig.add_trace(go.Box(
-            x=data[data["diet"] == diet]["diet"],
-            y=data[data["diet"] == diet]["length"],
-            name=diet,
-            marker_color=colors[i % len(colors)]
-        ))    
+        fig.add_trace(
+            go.Box(
+                x=data[data["diet"] == diet]["diet"],
+                y=data[data["diet"] == diet]["length"],
+                name=diet,
+                marker_color=colors[i % len(colors)],
+            )
+        )
 
     fig.update_layout(
         title="Longitud de Dinosaurios por Tipo de Dieta",
@@ -308,15 +327,16 @@ def dino_overview_length_by_diet():
         yaxis_title="Longitud (m)",
         xaxis_fixedrange=True,
         yaxis_fixedrange=True,
-        xaxis={"showticklabels": False}
+        xaxis={"showticklabels": False},
     )
 
     return fig
 
+
 # Top de Dinosaurios por Longitud
 def dino_overview_top_by_length(ascending=False):
     dino_top_ten = get_dino_top_ten(ascending)
-    
+
     fig1 = go.Bar(
         x=dino_top_ten["length"],
         y=dino_top_ten["name"],
@@ -375,29 +395,34 @@ def dino_overview_by_country():
     return fig
 
 
-# Graph for dinosaur count by period
-def dino_count_by_period(filtered_data):
-    fig = go.Figure(
-        data=[
-            go.Histogram(
-                x=filtered_data["period"], texttemplate="%{y}", textfont_size=15
-            )
-        ],
-        layout=dict(
-            barcornerradius=15,
-        ),
+#  Cantidad de dinosaurios por periodo
+def dino_overview_count_by_period():
+    dino_count = get_dino_count_by_period()
+    
+    fig1 = go.Bar(
+        x=dino_count["period"],
+        y=dino_count["count"],
+        texttemplate="%{y}",
+        textfont_size=15,
     )
+
+    fig = go.Figure(
+        data=[fig1],
+    )
+
+    fig.update_traces(marker_color=px.colors.sequential.Sunsetdark)
 
     fig.update_layout(
         title="Cantidad de Dinosaurios por Periodo",
-        xaxis_title="Periodo",
-        yaxis_title="Cantidad",
         plot_bgcolor=bg_color,
         paper_bgcolor=bg_color,
         font_color="#ffffff",
+        xaxis_title="Periodo",
+        yaxis_title="Cantidad",
         xaxis_fixedrange=True,
         yaxis_fixedrange=True,
     )
+
     return fig
 
 
@@ -417,33 +442,37 @@ def display_page(n_clicks_overview, n_clicks_periodo):
         elif button_id == "btn-periodo":
             return layout_periodo()
 
+
 @app.callback(
     Output("grafico-top-longitud", "figure"),
     Output("btn-asc-desc", "children"),
-    Input("btn-asc-desc", "n_clicks")
+    Input("btn-asc-desc", "n_clicks"),
 )
 def update_top_longitud(n_clicks):
     ascending = n_clicks % 2 == 1
     figure = dino_overview_top_by_length(ascending)
-    button_text = "Cambiar a Top Descendente ⬇️" if ascending else "Cambiar a Top Ascendente ⬆️"
+    button_text = (
+        "Cambiar a Top Descendente ⬇️" if ascending else "Cambiar a Top Ascendente ⬆️"
+    )
     return figure, button_text
 
+
 # Callback to update the graph based on dropdown selection
-@app.callback(
-    Output("grafico-dinosaurios", "figure"),
-    [Input("dropdown-period", "value")],
-    [State("btn-periodo", "n_clicks")],
-)
-def update_graph(selected_period, n_clicks_periodo):
-    if n_clicks_periodo is None:
-        return dash.no_update
+# @app.callback(
+#     Output("grafico-dinosaurios", "figure"),
+#     [Input("dropdown-period", "value")],
+#     [State("btn-periodo", "n_clicks")],
+# )
+# def update_graph(selected_period, n_clicks_periodo):
+#     if n_clicks_periodo is None:
+#         return dash.no_update
 
-    if selected_period == "Todos":
-        filtered_data = data
-    else:
-        filtered_data = data[data["period"] == selected_period]
+#     if selected_period == "Todos":
+#         filtered_data = data
+#     else:
+#         filtered_data = data[data["period"] == selected_period]
 
-    return dino_count_by_period(filtered_data)
+#     return dino_count_by_period(filtered_data)
 
 
 # Run the app
