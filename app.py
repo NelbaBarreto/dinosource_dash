@@ -236,7 +236,9 @@ def dino_overview_count_by_diet():
     fig = go.Figure(
         data=[fig1],
     )
-
+    
+    fig.update_traces(marker_color=px.colors.sequential.Sunsetdark)
+    
     fig.update_layout(
         title="Cantidad de Dinosaurios por Tipo de Dieta",
         plot_bgcolor=bg_color,
@@ -244,6 +246,8 @@ def dino_overview_count_by_diet():
         font_color="#ffffff",
         xaxis_title="Tipo de Dieta",
         yaxis_title="Cantidad",
+        xaxis_fixedrange=True,
+        yaxis_fixedrange=True,
     )
 
     return fig
@@ -261,7 +265,9 @@ def dino_overview_top_by_length():
     fig = go.Figure(
         data=[fig1],
     )
-
+    
+    fig.update_traces(marker_color=px.colors.sequential.Sunsetdark)
+    
     fig.update_layout(
         title="Top de Dinosaurios por Longitud (Descendente)",
         plot_bgcolor=bg_color,
@@ -269,6 +275,8 @@ def dino_overview_top_by_length():
         font_color="#ffffff",
         xaxis_title="Dinosaurio",
         yaxis_title="Longitud (m)",
+        xaxis_fixedrange=True,
+        yaxis_fixedrange=True
     )
 
     return fig
@@ -283,7 +291,7 @@ def dino_overview_by_country():
         text=dino_count_by_country["lived_in"],
         autocolorscale=False,     
         colorbar_title="Cantidad",
-        colorscale=px.colors.sequential.Plasma
+        colorscale=px.colors.sequential.Sunsetdark
     )
 
     fig = go.Figure(
@@ -297,6 +305,8 @@ def dino_overview_by_country():
         font_color="#ffffff",
         autosize=True,
         margin=dict(l=0, r=0, t=50, b=0),
+        xaxis_fixedrange=True,
+        yaxis_fixedrange=True,
     )
 
     return fig
@@ -314,6 +324,7 @@ def dino_count_by_period(filtered_data):
             barcornerradius=15,
         ),
     )
+    
     fig.update_layout(
         title="Cantidad de Dinosaurios por Periodo",
         xaxis_title="Periodo",
@@ -321,6 +332,8 @@ def dino_count_by_period(filtered_data):
         plot_bgcolor=bg_color,
         paper_bgcolor=bg_color,
         font_color="#ffffff",
+        xaxis_fixedrange=True,
+        yaxis_fixedrange=True,
     )
     return fig
 
