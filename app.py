@@ -132,12 +132,15 @@ dino_count_by_country = dino_count_by_country.merge(iso_df, on="lived_in", how="
 app.layout = html.Div(
     className="container m-auto",
     children=[
-        html.H1(
-            "Análisis de Datos de Dinosaurios 🦕",
-            className="text-5xl text-white mt-4 mb-6 text-center",
-        ),
         html.Div(
             [
+                html.Div(
+                    html.Span(
+                        f"dinosource 🦕",
+                        className="text-xl relative px-5 py-2.5 transition-all ease-in duration-75 bg-black text-white rounded-md font-bold font-serif",
+                    ),
+                    className=main_button,
+                ),
                 html.Button(
                     id="btn-overview",
                     n_clicks=0,
@@ -157,7 +160,7 @@ app.layout = html.Div(
                     children=html.Span("Dino Facts", className=main_button_span),
                 ),
             ],
-            className="flex justify-center",
+            className="flex justify-center mt-5",
         ),
         html.Div(id="page-content", className="lg:p-10 p-2"),
     ],
@@ -290,14 +293,12 @@ def layout_periodo():
         ]
     )
 
+
 # Gráficos de pantalla de facts
 def layout_facts():
-    return html.Div(
-        [
-            html.Span("")
-        ]
-    )
-    
+    return html.Div([html.Span("")])
+
+
 # Gráficos de pantalla de overview
 
 
