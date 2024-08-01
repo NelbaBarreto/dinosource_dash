@@ -5,6 +5,7 @@ from dash.dependencies import Input, Output, State
 import plotly.graph_objects as go
 import plotly.express as px
 import pandas as pd
+import random
 
 # call the ability to add external scripts
 external_scripts = [{"src": "https://cdn.tailwindcss.com"}]
@@ -54,7 +55,13 @@ total_count = len(data)
 total_country_count = len(data.groupby("lived_in"))
 # Obtener cantidad total de periodos
 total_period_count = len(data.groupby("period"))
-
+# Definir la paleta de colores
+palette = px.colors.sequential.Tealgrn + [
+    "rgb(30, 105, 133)",
+    "rgb(25, 85, 114)",
+    "rgb(20, 70, 94)",
+]
+palette_random = random.sample(palette, len(palette))
 
 # Obtener top 10 de dinosaurios por longitud
 def get_dino_top_ten(ascending=False):
@@ -70,9 +77,16 @@ def get_dino_top_ten(ascending=False):
 def get_dino_count_by_diet():
     return data.groupby("diet")["diet"].value_counts().reset_index()
 
+
 # Obtener la cantidad de dinosaurios por periodo
 def get_dino_count_by_period():
-    return data.groupby("period")["period"].value_counts().sort_values(ascending=False).reset_index()
+    return (
+        data.groupby("period")["period"]
+        .value_counts()
+        .sort_values(ascending=False)
+        .reset_index()
+    )
+
 
 # Obtener cantidad de dinosaurios por país y agregar el código de país
 # según ISO 3166-1 alpha-3
@@ -284,7 +298,7 @@ def dino_overview_count_by_diet():
                 hole=0.3,
                 hoverinfo="label+value",
                 textinfo="percent",
-                marker=dict(colors=px.colors.sequential.Sunsetdark),
+                marker=dict(colors=palette_random),
             )
         ]
     )
@@ -303,8 +317,13 @@ def dino_overview_count_by_diet():
 
 # Longitud de dinosaurios por tipo de dieta
 def dino_overview_length_by_diet():
-    unique_diets = data["diet"].unique()
-    colors = px.colors.sequential.Sunsetdark
+    unique_diets = (
+        data.groupby("diet")["diet"]
+        .value_counts()
+        .sort_values(ascending=False)
+        .reset_index()
+    )
+    unique_diets = unique_diets[unique_diets["count"] > 10]["diet"]
 
     fig = go.Figure()
 
@@ -314,7 +333,7 @@ def dino_overview_length_by_diet():
                 x=data[data["diet"] == diet]["diet"],
                 y=data[data["diet"] == diet]["length"],
                 name=diet,
-                marker_color=colors[i % len(colors)],
+                marker_color=palette_random[i % len(palette_random)],
             )
         )
 
@@ -327,7 +346,7 @@ def dino_overview_length_by_diet():
         yaxis_title="Longitud (m)",
         xaxis_fixedrange=True,
         yaxis_fixedrange=True,
-        xaxis={"showticklabels": False},
+        showlegend=False,
     )
 
     return fig
@@ -349,7 +368,7 @@ def dino_overview_top_by_length(ascending=False):
         data=[fig1],
     )
 
-    fig.update_traces(marker_color=px.colors.sequential.Sunsetdark)
+    fig.update_traces(marker_color=palette)
 
     fig.update_layout(
         title="Top de Dinosaurios por Longitud",
@@ -374,7 +393,7 @@ def dino_overview_by_country():
         text=dino_count_by_country["lived_in"],
         autocolorscale=False,
         colorbar_title="Cantidad",
-        colorscale=px.colors.sequential.Sunsetdark,
+        colorscale=palette,
     )
 
     fig = go.Figure(
@@ -398,7 +417,7 @@ def dino_overview_by_country():
 #  Cantidad de dinosaurios por periodo
 def dino_overview_count_by_period():
     dino_count = get_dino_count_by_period()
-    
+
     fig1 = go.Bar(
         x=dino_count["period"],
         y=dino_count["count"],
@@ -410,7 +429,7 @@ def dino_overview_count_by_period():
         data=[fig1],
     )
 
-    fig.update_traces(marker_color=px.colors.sequential.Sunsetdark)
+    fig.update_traces(marker_color=palette_random)
 
     fig.update_layout(
         title="Cantidad de Dinosaurios por Periodo",
