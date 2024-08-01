@@ -61,7 +61,9 @@ palette = px.colors.sequential.Tealgrn + [
     "rgb(25, 85, 114)",
     "rgb(20, 70, 94)",
 ]
+random.seed(7)
 palette_random = random.sample(palette, len(palette))
+
 
 # Obtener top 10 de dinosaurios por longitud
 def get_dino_top_ten(ascending=False):
@@ -80,12 +82,7 @@ def get_dino_count_by_diet():
 
 # Obtener la cantidad de dinosaurios por periodo
 def get_dino_count_by_period():
-    return (
-        data.groupby("period")["period"]
-        .value_counts()
-        .sort_values(ascending=False)
-        .reset_index()
-    )
+    return data.groupby("period")["period"].value_counts().sort_values().reset_index()
 
 
 # Obtener cantidad de dinosaurios por país y agregar el código de país
@@ -152,6 +149,12 @@ app.layout = html.Div(
                     n_clicks=0,
                     className=main_button,
                     children=html.Span("Periodo", className=main_button_span),
+                ),
+                html.Button(
+                    id="btn-facts",
+                    n_clicks=0,
+                    className=main_button,
+                    children=html.Span("Dino Facts", className=main_button_span),
                 ),
             ],
             className="flex justify-center",
@@ -227,21 +230,27 @@ def layout_overview():
             ),
             html.Div(
                 children=[
-                    html.Div(
+                    dcc.Loading(
+                        id="loading-1",
                         children=[
-                            dcc.Graph(
-                                id="grafico-top-longitud",
-                                figure=dino_overview_top_by_length(),
-                            ),
-                            html.Button(
-                                id="btn-asc-desc",
-                                n_clicks=0,
-                                className="relative inline-flex items-center justify-center p-1 mb-2 me-2 bg-lime-300 overflow-hidden text-gray-900 font-semibold rounded-lg focus:ring-4 focus:outline-none hover:ring-4",
-                                children=html.Span(
-                                    "Cambiar a Top Ascendente ⬆️",
-                                ),
+                            html.Div(
+                                children=[
+                                    dcc.Graph(
+                                        id="grafico-top-longitud",
+                                        figure=dino_overview_top_by_length(),
+                                    ),
+                                    html.Button(
+                                        id="btn-asc-desc",
+                                        n_clicks=0,
+                                        className="relative inline-flex items-center justify-center p-1 mb-2 me-2 bg-lime-300 overflow-hidden text-gray-900 font-semibold rounded-lg focus:ring-4 focus:outline-none hover:ring-4",
+                                        children=html.Span(
+                                            "Cambiar a Top Ascendente ⬆️",
+                                        ),
+                                    ),
+                                ],
                             ),
                         ],
+                        type="circle",
                     ),
                     dcc.Graph(
                         id="grafico-dieta", figure=dino_overview_count_by_period()
@@ -278,11 +287,17 @@ def layout_periodo():
                 value="Todos",
                 className="w-1/2",
             ),
-            dcc.Graph(id="grafico-dinosaurios"),
         ]
     )
 
-
+# Gráficos de pantalla de facts
+def layout_facts():
+    return html.Div(
+        [
+            html.Span("")
+        ]
+    )
+    
 # Gráficos de pantalla de overview
 
 
@@ -295,7 +310,6 @@ def dino_overview_count_by_diet():
             go.Pie(
                 labels=dino_count["diet"],
                 values=dino_count["count"],
-                hole=0.3,
                 hoverinfo="label+value",
                 textinfo="percent",
                 marker=dict(colors=palette_random),
@@ -429,7 +443,7 @@ def dino_overview_count_by_period():
         data=[fig1],
     )
 
-    fig.update_traces(marker_color=palette_random)
+    fig.update_traces(marker_color=palette)
 
     fig.update_layout(
         title="Cantidad de Dinosaurios por Periodo",
