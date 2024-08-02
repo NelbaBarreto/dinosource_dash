@@ -13,8 +13,8 @@ external_scripts = [{"src": "https://cdn.tailwindcss.com"}]
 # Styles
 bg_color = "#111111"
 
-main_button = "relative inline-flex items-center justify-center p-1 mb-2 me-2 overflow-hidden text-sm text-gray-900 rounded-lg group bg-gradient-to-br from-teal-300 to-lime-300 group-hover:from-teal-300 group-hover:to-lime-300 focus:ring-4 focus:outline-none"
-main_button_span = "text-xl relative px-5 py-2.5 transition-all ease-in duration-75 bg-white rounded-md font-semibold group-hover:bg-opacity-0 hover:font-bold"
+main_button = "relative inline-flex items-center justify-center p-1 mb-2 me-2 overflow-hidden text-gray-900 rounded-lg group bg-gradient-to-br from-teal-300 to-lime-300 group-hover:from-teal-300 group-hover:to-lime-300 focus:ring-4 focus:outline-none"
+main_button_span = "md:text-xl text-md relative px-5 py-2.5 transition-all ease-in duration-75 bg-white rounded-md font-semibold group-hover:bg-opacity-0 hover:font-bold"
 tile = "relative inline-flex items-center justify-center p-2 mb-2 me-2 overflow-hidden text-lg font-bold text-gray-900 rounded-lg group bg-gradient-to-br from-teal-300 to-lime-300 group-hover:from-teal-300 group-hover:to-lime-300"
 
 # Initialize the app
@@ -142,7 +142,7 @@ app.layout = html.Div(
                 html.Div(
                     html.Span(
                         f"dinosource 🦕",
-                        className="text-xl relative px-5 py-2.5 transition-all ease-in duration-75 bg-black text-white rounded-md font-bold font-serif",
+                        className="md:text-xl sm:text-md text-xs relative px-5 py-2.5 transition-all ease-in duration-75 bg-black text-white rounded-md font-bold font-serif",
                     ),
                     className=main_button,
                 ),
@@ -301,10 +301,26 @@ def layout_periodo():
 
 # Gráficos de pantalla de facts
 def layout_facts():
+    data_aux = pd.DataFrame(data)
+    
     max_length_dinosaur = data.loc[data["length"].idxmax()]
     min_length_dinosaur = data.loc[data["length"].idxmin()]
     longest_name_dinosaur = data.loc[data["name"].apply(len).idxmax()]
     shortest_name_dinosaur = data.loc[data["name"].apply(len).idxmin()]
+    
+    # Obtener el periodo más antiguo
+    earliest_year = data_aux["full_period"].str.extract(r'(\d+)-\d+')
+    earliest_year.fillna("0", inplace=True)
+    earliest_year = earliest_year.astype(int)
+    data_aux["earliest_year"] = earliest_year
+    oldest_dinosaur = data.loc[data_aux["earliest_year"].idxmax()]
+
+    # Obtener el periodo más reciente
+    earliest_year = data_aux["full_period"].str.extract(r'\d+-(\d+)')
+    earliest_year.fillna("999999", inplace=True)
+    earliest_year = earliest_year.astype(int)
+    data_aux["newest_year"] = earliest_year
+    newest_dinosaur = data.loc[data_aux["newest_year"].idxmin()]    
 
     return html.Div(
         children=[
@@ -318,11 +334,13 @@ def layout_facts():
                     dino_card("La menor longitud", min_length_dinosaur),
                     dino_card("El nombre más largo", longest_name_dinosaur),
                     dino_card("El nombre más corto", shortest_name_dinosaur),
+                    dino_card("El más antiguo", oldest_dinosaur),
+                    dino_card("El más reciente", newest_dinosaur),
                 ],
                 className="grid sm:grid-cols-2 lg:grid-cols-3 grid-cols-1 gap-2",
             ),
         ],
-        className="container",
+        className="container m-auto",
     )
 
 
@@ -341,7 +359,7 @@ def dino_card(title, row):
                 children=[
                     html.Li(children=[html.Span("Dieta: ", className="text-lime-300 font-semibold"), row["diet"]]),
                     html.Li(children=[html.Span("Periodo: ", className="text-lime-300 font-semibold"), row["full_period"]]),
-                    html.Li(children=[html.Span("Encontrado en: ", className="text-lime-300 font-semibold"), row["lived_in"]]),
+                    html.Li(children=[html.Span("Vivió en: ", className="text-lime-300 font-semibold"), row["lived_in"]]),
                     html.Li(children=[html.Span("Tipo: ", className="text-lime-300 font-semibold"), row["type"]]),
                     html.Li(children=[html.Span("Longitud: ", className="text-lime-300 font-semibold"), f"{row['length']} m"]),
                     html.Li(children=[html.Span("Taxonomía: ", className="text-lime-300 font-semibold"), row["taxonomy"]]),
