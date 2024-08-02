@@ -19,7 +19,10 @@ tile = "relative inline-flex items-center justify-center p-2 mb-2 me-2 overflow-
 
 # Initialize the app
 app = dash.Dash(
-    __name__, external_scripts=external_scripts, suppress_callback_exceptions=True
+    __name__,
+    external_scripts=external_scripts,
+    suppress_callback_exceptions=True,
+    title="dinosource",
 )
 
 server = app.server
@@ -30,6 +33,8 @@ data = pd.read_csv(
 
 data["length"] = data["length"].str.replace("m", "")  # Quitar el caracter m
 data["length"] = data["length"].astype(float)
+# Capitalizar los valores de la columna name
+data["name"] = data["name"].str.capitalize()
 
 data.loc[data["period"] == "USA", "period"] = "Late Cretaceous"
 
@@ -157,7 +162,7 @@ app.layout = html.Div(
                     id="btn-facts",
                     n_clicks=0,
                     className=main_button,
-                    children=html.Span("Dino Facts", className=main_button_span),
+                    children=html.Span("Data Facts", className=main_button_span),
                 ),
             ],
             className="flex justify-center mt-5",
@@ -296,7 +301,65 @@ def layout_periodo():
 
 # Gráficos de pantalla de facts
 def layout_facts():
-    return html.Div([html.Span("")])
+    max_length_dinosaur = data.loc[data["length"].idxmax()]
+    min_length_dinosaur = data.loc[data["length"].idxmin()]
+    longest_name_dinosaur = data.loc[data["name"].apply(len).idxmax()]
+    shortest_name_dinosaur = data.loc[data["name"].apply(len).idxmin()]
+
+    return html.Div(
+        children=[
+            html.P(
+                "🚨 Observación: Todos los datos presentados a continuación son en relación al dataset utilizado de fuente.",
+                className="mb-2 text-white",
+            ),
+            html.Div(
+                children=[
+                    dino_card("La mayor longitud", max_length_dinosaur),
+                    dino_card("La menor longitud", min_length_dinosaur),
+                    dino_card("El nombre más largo", longest_name_dinosaur),
+                    dino_card("El nombre más corto", shortest_name_dinosaur),
+                ],
+                className="grid sm:grid-cols-3 grid-cols-1 gap-2",
+            ),
+        ],
+        className="container",
+    )
+
+
+def dino_card(title, row):
+    return html.Div(
+        children=[
+            html.H3(
+                title,
+                className="mb-2 text-2xl font-semibold text-white text-center",
+            ),
+            html.H4(
+                row["name"],
+                className="mb-2 text-xl font-semibold text-white",
+            ),
+            html.Ul(
+                children=[
+                    html.Li(children=[html.B("Dieta: "), row["diet"]]),
+                    html.Li(children=[html.B("Periodo: "), row["full_period"]]),
+                    html.Li(children=[html.B("Encontrado en: "), row["lived_in"]]),
+                    html.Li(children=[html.B("Tipo: "), row["type"]]),
+                    html.Li(children=[html.B("Longitud: "), f"{row['length']} m"]),
+                    html.Li(children=[html.B("Taxonomía: "), row["taxonomy"]]),
+                    html.Li(children=[html.B("Nombrado por: "), row["named_by"]]),
+                    html.Li(children=[html.B("Especie: "), row["species"]]),
+                ],
+                className="text-white",
+            ),
+            html.A(
+                children=["Ver Más"],
+                href=row["link"],
+                target="_blank",
+                rel="noopener noreferrer",
+                className="inline-flex font-medium items-center text-teal-600 hover:underline mt-2 font-bold",
+            ),
+        ],
+        className="max-w-sm p-6 bg-[#111111] rounded-lg",
+    )
 
 
 # Gráficos de pantalla de overview
@@ -463,9 +526,13 @@ def dino_overview_count_by_period():
 # Callback to handle button clicks and update the page content
 @app.callback(
     Output("page-content", "children"),
-    [Input("btn-overview", "n_clicks"), Input("btn-periodo", "n_clicks")],
+    [
+        Input("btn-overview", "n_clicks"),
+        Input("btn-periodo", "n_clicks"),
+        Input("btn-facts", "n_clicks"),
+    ],
 )
-def display_page(n_clicks_overview, n_clicks_periodo):
+def display_page(n_clicks_overview, n_clicks_periodo, n_clicks_facts):
     ctx = dash.callback_context
     if not ctx.triggered:
         return layout_overview()
@@ -475,6 +542,8 @@ def display_page(n_clicks_overview, n_clicks_periodo):
             return layout_overview()
         elif button_id == "btn-periodo":
             return layout_periodo()
+        elif button_id == "btn-facts":
+            return layout_facts()
 
 
 @app.callback(
