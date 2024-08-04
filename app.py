@@ -15,6 +15,7 @@ bg_color = "#111111"
 
 main_button = "relative inline-flex items-center justify-center p-1 mb-2 me-2 overflow-hidden text-gray-900 rounded-lg group bg-gradient-to-br from-teal-300 to-lime-300 group-hover:from-teal-300 group-hover:to-lime-300 focus:ring-4 focus:outline-none"
 main_button_span = "md:text-xl text-md relative px-5 py-2.5 transition-all ease-in duration-75 bg-white rounded-md font-semibold group-hover:bg-opacity-0 hover:font-bold"
+selected_main_button_span = "md:text-xl text-md relative px-5 py-2.5 transition-all ease-in duration-75 group bg-gradient-to-br from-teal-300 to-lime-300 rounded-md font-semibold group-hover:bg-opacity-0 hover:font-bold"
 tile = "relative inline-flex items-center justify-center p-2 mb-2 me-2 overflow-hidden text-lg font-bold text-gray-900 rounded-lg group bg-gradient-to-br from-teal-300 to-lime-300 group-hover:from-teal-300 group-hover:to-lime-300"
 
 # Initialize the app
@@ -68,7 +69,6 @@ palette = px.colors.sequential.Tealgrn + [
 ]
 random.seed(7)
 palette_random = random.sample(palette, len(palette))
-
 
 # Obtener top 10 de dinosaurios por longitud
 def get_dino_top_ten(ascending=False):
@@ -340,7 +340,7 @@ def layout_facts():
                 className="grid sm:grid-cols-2 lg:grid-cols-3 grid-cols-1 gap-2",
             ),
         ],
-        className="container m-auto",
+        className="container",
     )
 
 
@@ -376,7 +376,7 @@ def dino_card(title, row):
                 className="inline-flex items-center p-2 rounded-lg bg-lime-300 mt-2 hover:underline",
             ),
         ],
-        className="max-w-sm p-6 bg-[#111111] rounded-lg",
+        className="max-w-sm p-6 bg-[#111111] rounded-lg m-auto h-full",
     )
 
 
@@ -471,8 +471,8 @@ def dino_overview_top_by_length(ascending=False):
         plot_bgcolor=bg_color,
         paper_bgcolor=bg_color,
         font_color="#ffffff",
-        xaxis_title="Dinosaurio",
-        yaxis_title="Longitud (m)",
+        xaxis_title="Longitud (m)",
+        yaxis_title="Dinosaurio",
         xaxis_fixedrange=True,
         yaxis_fixedrange=True,
     )
@@ -576,7 +576,6 @@ def update_top_longitud(n_clicks):
         "Cambiar a Top Descendente ⬇️" if ascending else "Cambiar a Top Ascendente ⬆️"
     )
     return figure, button_text
-
 
 # Callback to update the graph based on dropdown selection
 # @app.callback(
