@@ -70,6 +70,7 @@ palette = px.colors.sequential.Tealgrn + [
 random.seed(7)
 palette_random = random.sample(palette, len(palette))
 
+
 # Obtener top 10 de dinosaurios por longitud
 def get_dino_top_ten(ascending=False):
     if ascending:
@@ -162,7 +163,7 @@ app.layout = html.Div(
                     id="btn-facts",
                     n_clicks=0,
                     className=main_button,
-                    children=html.Span("Data Facts", className=main_button_span),
+                    children=html.Span("Más Info", className=main_button_span),
                 ),
             ],
             className="flex justify-center mt-5",
@@ -302,31 +303,42 @@ def layout_periodo():
 # Gráficos de pantalla de facts
 def layout_facts():
     data_aux = pd.DataFrame(data)
-    
+
     max_length_dinosaur = data.loc[data["length"].idxmax()]
     min_length_dinosaur = data.loc[data["length"].idxmin()]
     longest_name_dinosaur = data.loc[data["name"].apply(len).idxmax()]
     shortest_name_dinosaur = data.loc[data["name"].apply(len).idxmin()]
-    
+
     # Obtener el periodo más antiguo
-    earliest_year = data_aux["full_period"].str.extract(r'(\d+)-\d+')
+    earliest_year = data_aux["full_period"].str.extract(r"(\d+)-\d+")
     earliest_year.fillna("0", inplace=True)
     earliest_year = earliest_year.astype(int)
     data_aux["earliest_year"] = earliest_year
     oldest_dinosaur = data.loc[data_aux["earliest_year"].idxmax()]
 
     # Obtener el periodo más reciente
-    earliest_year = data_aux["full_period"].str.extract(r'\d+-(\d+)')
+    earliest_year = data_aux["full_period"].str.extract(r"\d+-(\d+)")
     earliest_year.fillna("999999", inplace=True)
     earliest_year = earliest_year.astype(int)
     data_aux["newest_year"] = earliest_year
-    newest_dinosaur = data.loc[data_aux["newest_year"].idxmin()]    
+    newest_dinosaur = data.loc[data_aux["newest_year"].idxmin()]
 
     return html.Div(
         children=[
             html.P(
-                "🚨 Observación: Todos los datos presentados a continuación son en relación al dataset utilizado de fuente.",
-                className="mb-2 text-white",
+                children=[
+                    html.Span("🚨 Observación: ", className="text-red-500 font-bold"),
+                    "Todos los datos presentados a continuación son en relación al ",
+                    html.A(
+                        children=[html.Span("dataset")],
+                        href="https://www.kaggle.com/datasets/kjanjua/jurassic-park-the-exhaustive-dinosaur-dataset",
+                        target="_blank",
+                        rel="noopener noreferrer",
+                        className="text-lime-300 underline"
+                    ),
+                    " utilizado de fuente.",
+                ],
+                className="mb-2 text-white border-s-4 border-red-500",
             ),
             html.Div(
                 children=[
@@ -357,19 +369,78 @@ def dino_card(title, row):
             ),
             html.Ul(
                 children=[
-                    html.Li(children=[html.Span("Dieta: ", className="text-lime-300 font-semibold"), row["diet"]]),
-                    html.Li(children=[html.Span("Periodo: ", className="text-lime-300 font-semibold"), row["full_period"]]),
-                    html.Li(children=[html.Span("Vivió en: ", className="text-lime-300 font-semibold"), row["lived_in"]]),
-                    html.Li(children=[html.Span("Tipo: ", className="text-lime-300 font-semibold"), row["type"]]),
-                    html.Li(children=[html.Span("Longitud: ", className="text-lime-300 font-semibold"), f"{row['length']} m"]),
-                    html.Li(children=[html.Span("Taxonomía: ", className="text-lime-300 font-semibold"), row["taxonomy"]]),
-                    html.Li(children=[html.Span("Nombrado por: ", className="text-lime-300 font-semibold"), row["named_by"]]),
-                    html.Li(children=[html.Span("Especie: ", className="text-lime-300 font-semibold"), row["species"]]),
+                    html.Li(
+                        children=[
+                            html.Span(
+                                "Dieta: ", className="text-lime-300 font-semibold"
+                            ),
+                            row["diet"],
+                        ]
+                    ),
+                    html.Li(
+                        children=[
+                            html.Span(
+                                "Periodo: ", className="text-lime-300 font-semibold"
+                            ),
+                            row["full_period"],
+                        ]
+                    ),
+                    html.Li(
+                        children=[
+                            html.Span(
+                                "Vivió en: ", className="text-lime-300 font-semibold"
+                            ),
+                            row["lived_in"],
+                        ]
+                    ),
+                    html.Li(
+                        children=[
+                            html.Span(
+                                "Tipo: ", className="text-lime-300 font-semibold"
+                            ),
+                            row["type"],
+                        ]
+                    ),
+                    html.Li(
+                        children=[
+                            html.Span(
+                                "Longitud: ", className="text-lime-300 font-semibold"
+                            ),
+                            f"{row['length']} m",
+                        ]
+                    ),
+                    html.Li(
+                        children=[
+                            html.Span(
+                                "Taxonomía: ", className="text-lime-300 font-semibold"
+                            ),
+                            row["taxonomy"],
+                        ]
+                    ),
+                    html.Li(
+                        children=[
+                            html.Span(
+                                "Nombrado por: ",
+                                className="text-lime-300 font-semibold",
+                            ),
+                            row["named_by"],
+                        ]
+                    ),
+                    html.Li(
+                        children=[
+                            html.Span(
+                                "Especie: ", className="text-lime-300 font-semibold"
+                            ),
+                            row["species"],
+                        ]
+                    ),
                 ],
                 className="text-white",
             ),
             html.A(
-                children=[html.Span("Ver Más", className="font-semibold text-dark-900")],
+                children=[
+                    html.Span("Ver Más", className="font-semibold text-dark-900")
+                ],
                 href=row["link"],
                 target="_blank",
                 rel="noopener noreferrer",
@@ -576,6 +647,7 @@ def update_top_longitud(n_clicks):
         "Cambiar a Top Descendente ⬇️" if ascending else "Cambiar a Top Ascendente ⬆️"
     )
     return figure, button_text
+
 
 # Callback to update the graph based on dropdown selection
 # @app.callback(
