@@ -13,10 +13,10 @@ external_scripts = [{"src": "https://cdn.tailwindcss.com"}]
 # Styles
 bg_color = "#111111"
 
-main_button = "relative inline-flex items-center justify-center p-1 mb-2 me-2 overflow-hidden text-gray-900 rounded-lg group bg-gradient-to-br from-teal-300 to-lime-300 group-hover:from-teal-300 group-hover:to-lime-300 focus:ring-4 focus:outline-none"
-main_button_span = "md:text-xl text-md relative px-5 py-2.5 transition-all ease-in duration-75 bg-white rounded-md font-semibold group-hover:bg-opacity-0 hover:font-bold"
-selected_main_button_span = "md:text-xl text-md relative px-5 py-2.5 transition-all ease-in duration-75 group bg-gradient-to-br from-teal-300 to-lime-300 rounded-md font-semibold group-hover:bg-opacity-0 hover:font-bold"
-tile = "relative inline-flex items-center justify-center p-2 mb-2 me-2 overflow-hidden text-lg font-bold text-gray-900 rounded-lg group bg-gradient-to-br from-teal-300 to-lime-300 group-hover:from-teal-300 group-hover:to-lime-300"
+MAIN_BUTTON = "relative inline-flex items-center justify-center p-1 mb-2 me-2 overflow-hidden text-gray-900 rounded-lg group bg-gradient-to-br from-teal-300 to-lime-300 group-hover:from-teal-300 group-hover:to-lime-300 focus:ring-4 focus:outline-none"
+MAIN_BUTTON_SPAN = "md:text-xl text-md relative px-5 py-2.5 transition-all ease-in duration-75 bg-white rounded-md font-semibold group-hover:bg-opacity-0 hover:font-bold"
+SELECTED_MAIN_BUTTON_SPAN = "md:text-xl text-md relative px-5 py-2.5 transition-all ease-in duration-75 group bg-gradient-to-br from-teal-300 to-lime-300 rounded-md font-semibold group-hover:bg-opacity-0 hover:font-bold"
+TILE = "relative inline-flex items-center justify-center p-2 mb-2 me-2 overflow-hidden text-lg font-bold text-gray-900 rounded-lg group bg-gradient-to-br from-teal-300 to-lime-300 group-hover:from-teal-300 group-hover:to-lime-300"
 
 # Initialize the app
 app = dash.Dash(
@@ -145,25 +145,31 @@ app.layout = html.Div(
                         f"dinosource 🦕",
                         className="md:text-xl sm:text-md text-xs relative px-5 py-2.5 transition-all ease-in duration-75 bg-black text-white rounded-md font-bold font-serif",
                     ),
-                    className=main_button,
+                    className=MAIN_BUTTON,
                 ),
                 html.Button(
                     id="btn-overview",
                     n_clicks=0,
-                    className=main_button,
-                    children=html.Span("Overview", className=main_button_span),
+                    className=MAIN_BUTTON,
+                    children=html.Span(
+                        "Overview", className=MAIN_BUTTON_SPAN, id="span-overview"
+                    ),
                 ),
                 html.Button(
                     id="btn-periodo",
                     n_clicks=0,
-                    className=main_button,
-                    children=html.Span("Periodo", className=main_button_span),
+                    className=MAIN_BUTTON,
+                    children=html.Span(
+                        "Periodo", className=MAIN_BUTTON_SPAN, id="span-periodo"
+                    ),
                 ),
                 html.Button(
                     id="btn-facts",
                     n_clicks=0,
-                    className=main_button,
-                    children=html.Span("Más Info", className=main_button_span),
+                    className=MAIN_BUTTON,
+                    children=html.Span(
+                        "Más Info", className=MAIN_BUTTON_SPAN, id="span-facts"
+                    ),
                 ),
             ],
             className="flex justify-center mt-5",
@@ -192,7 +198,7 @@ def layout_overview():
                                 className="text-center",
                             )
                         ],
-                        className=tile,
+                        className=TILE,
                     ),
                     html.Div(
                         [
@@ -207,7 +213,7 @@ def layout_overview():
                                 className="text-center",
                             )
                         ],
-                        className=tile,
+                        className=TILE,
                     ),
                     html.Div(
                         [
@@ -222,7 +228,7 @@ def layout_overview():
                                 className="text-center",
                             )
                         ],
-                        className=tile,
+                        className=TILE,
                     ),
                 ],
                 className="grid sm:grid-cols-3 grid-cols-1",
@@ -328,13 +334,13 @@ def layout_facts():
             html.P(
                 children=[
                     html.Span("🚨 Observación: ", className="text-red-500 font-bold"),
-                    "Todos los datos presentados a continuación son en relación al ",
+                    "Todos los datos presentados a continuación están basados en el ",
                     html.A(
                         children=[html.Span("dataset")],
                         href="https://www.kaggle.com/datasets/kjanjua/jurassic-park-the-exhaustive-dinosaur-dataset",
                         target="_blank",
                         rel="noopener noreferrer",
-                        className="text-lime-300 underline"
+                        className="text-lime-300 underline",
                     ),
                     " utilizado de fuente.",
                 ],
@@ -614,7 +620,12 @@ def dino_overview_count_by_period():
 
 # Callback to handle button clicks and update the page content
 @app.callback(
-    Output("page-content", "children"),
+    [
+        Output("page-content", "children"),
+        Output("span-overview", "className"),
+        Output("span-periodo", "className"),
+        Output("span-facts", "className"),
+    ],
     [
         Input("btn-overview", "n_clicks"),
         Input("btn-periodo", "n_clicks"),
@@ -624,15 +635,15 @@ def dino_overview_count_by_period():
 def display_page(n_clicks_overview, n_clicks_periodo, n_clicks_facts):
     ctx = dash.callback_context
     if not ctx.triggered:
-        return layout_overview()
+        return (layout_overview(), SELECTED_MAIN_BUTTON_SPAN, MAIN_BUTTON_SPAN, MAIN_BUTTON_SPAN)
     else:
         button_id = ctx.triggered[0]["prop_id"].split(".")[0]
         if button_id == "btn-overview":
-            return layout_overview()
+            return (layout_overview(), SELECTED_MAIN_BUTTON_SPAN, MAIN_BUTTON_SPAN, MAIN_BUTTON_SPAN)
         elif button_id == "btn-periodo":
-            return layout_periodo()
+            return (layout_periodo(), MAIN_BUTTON_SPAN, SELECTED_MAIN_BUTTON_SPAN, MAIN_BUTTON_SPAN)
         elif button_id == "btn-facts":
-            return layout_facts()
+            return (layout_facts(), MAIN_BUTTON_SPAN, MAIN_BUTTON_SPAN, SELECTED_MAIN_BUTTON_SPAN)
 
 
 @app.callback(
