@@ -639,9 +639,7 @@ def dino_overview_count_by_period():
 def display_page(n_clicks_overview, n_clicks_periodo, n_clicks_facts):
     ctx = dash.callback_context
     if not ctx.triggered:
-        # return (layout_overview(), SELECTED_MAIN_BUTTON_SPAN, MAIN_BUTTON_SPAN, MAIN_BUTTON_SPAN)
-        # acordarse de cambiar
-        return (layout_periodo(), MAIN_BUTTON_SPAN, SELECTED_MAIN_BUTTON_SPAN, MAIN_BUTTON_SPAN)
+        return (layout_overview(), SELECTED_MAIN_BUTTON_SPAN, MAIN_BUTTON_SPAN, MAIN_BUTTON_SPAN)
     else:
         button_id = ctx.triggered[0]["prop_id"].split(".")[0]
         if button_id == "btn-overview":
