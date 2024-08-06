@@ -53,7 +53,7 @@ data.loc[data["lived_in"] == "North Africa", "lived_in"] = "Algeria"
 data.loc[data["lived_in"] == "Wales", "lived_in"] = "United Kingdom"
 
 unique_periods = list(data["period"].unique())
-periods_options = [{"label": html.Span(period, className="ml-2 hover:text-lime-300 hover:font-semibold"), "value": period} for period in unique_periods]
+periods_options = [{"label": html.Span(period, className="ml-2 hover:text-lime-300 hover:underline"), "value": period} for period in unique_periods]
 # Obtener cantidad total de dinosaurios
 total_count = len(data)
 # Obtener cantidad total de países
@@ -293,20 +293,22 @@ def layout_periodo():
     [
         dcc.Checklist(
             id="all-or-none",
-            options=[{"label": html.Span("Seleccionar/Deseleccionar Todos", className="ml-2 text-lime-300 hover:font-semibold"), "value": "Todos"}],
+            options=[{"label": html.Span("Seleccionar/Deseleccionar Todos", className="ml-2 hover:text-lime-300 hover:underline"), "value": "Todos"}],
             value=[],
             className="mb-2",
-            labelStyle={"cursor": "pointer"}
+            labelStyle={"cursor": "pointer"},
+            inputStyle={"cursor": "pointer"}
         ),
         dcc.Checklist(
             id="my-checklist",
             options=periods_options,
             value=[],
             className="grid sm:grid-cols-2 lg:grid-cols-3 grid-cols-1 gap-2",
-            labelStyle={"cursor": "pointer"}
+            labelStyle={"cursor": "pointer"},
+            inputStyle={"cursor": "pointer"}
         ),
     ],
-    className="text-white p-6 bg-[#111111] rounded-lg text-lg"
+    className="text-white p-6 bg-[#111111] rounded-lg"
 )
 
 
@@ -639,7 +641,8 @@ def dino_overview_count_by_period():
 def display_page(n_clicks_overview, n_clicks_periodo, n_clicks_facts):
     ctx = dash.callback_context
     if not ctx.triggered:
-        return (layout_overview(), SELECTED_MAIN_BUTTON_SPAN, MAIN_BUTTON_SPAN, MAIN_BUTTON_SPAN)
+        # return (layout_overview(), SELECTED_MAIN_BUTTON_SPAN, MAIN_BUTTON_SPAN, MAIN_BUTTON_SPAN)
+        return (layout_periodo(), MAIN_BUTTON_SPAN, SELECTED_MAIN_BUTTON_SPAN, MAIN_BUTTON_SPAN)
     else:
         button_id = ctx.triggered[0]["prop_id"].split(".")[0]
         if button_id == "btn-overview":
@@ -663,17 +666,32 @@ def update_top_longitud(n_clicks):
     )
     return figure, button_text
 
-
 @app.callback(
-    Output("my-checklist", "value"),
-    [Input("all-or-none", "value")],
-    [State("my-checklist", "options")],
+    [Output("my-checklist", "value"),
+     Output("all-or-none", "value")],
+    [Input("all-or-none", "value"),
+     Input("my-checklist", "value")],
+    [State("my-checklist", "options")]
 )
-def select_all_none(all_selected, options):
-    all_or_none = []
-    all_or_none = [option["value"] for option in options if all_selected]
-    return all_or_none
+def update_checklists(all_selected, selected_values, options):
+    ctx = dash.callback_context
 
+    if not ctx.triggered:
+        raise dash.exceptions.PreventUpdate
+
+    triggered_id = ctx.triggered[0]['prop_id'].split('.')[0]
+
+    if triggered_id == "all-or-none":
+        if "Todos" in all_selected:
+            return [[option["value"] for option in options], ["Todos"]]
+        else:
+            return [[], []]
+
+    elif triggered_id == "my-checklist":
+        if len(selected_values) == len(options):
+            return [selected_values, ["Todos"]]
+        else:
+            return [selected_values, []]
 
 # Run the app
 if __name__ == "__main__":
