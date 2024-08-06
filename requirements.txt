@@ -1,3 +1,4 @@
 dash
 pandas
 gunicorn
+scikit-learn

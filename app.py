@@ -4,6 +4,8 @@ from dash import html
 from dash.dependencies import Input, Output, State
 import plotly.graph_objects as go
 import plotly.express as px
+from sklearn.preprocessing import MinMaxScaler
+import numpy as np
 import pandas as pd
 import random
 
@@ -169,10 +171,55 @@ iso_df = pd.DataFrame.from_dict(iso_data, orient="index").reset_index()
 iso_df.columns = ["lived_in", "country_iso_code"]
 
 
-# Crear un dataframe de cantidad de dinosaurios por país
-def get_dino_count_by_country():
-    dino_count_by_country = data["lived_in"].value_counts().sort_values().reset_index()
-    return dino_count_by_country.merge(iso_df, on="lived_in", how="left")
+# Obtener la cantidad de dinosaurios por país
+def get_dino_count_by_country(periodo):
+    if periodo:
+        if periodo == "Todos":
+            dino_count_by_country = (
+                data["lived_in"].value_counts().sort_values().reset_index()
+            )
+        elif len(periodo):
+            dino_count_by_country = (
+                data[data["period"].isin(periodo)]["lived_in"]
+                .value_counts()
+                .sort_values()
+                .reset_index()
+            )
+
+        dino_count_by_country = dino_count_by_country.merge(
+            iso_df, on="lived_in", how="left"
+        )
+        # Escalar la columna count (para controlar el tamaño de las burbujas en el mapa)
+        dino_count_by_country["scaled_count"] = MinMaxScaler().fit_transform(
+            np.array(dino_count_by_country["count"]).reshape(-1, 1)
+        )
+        dino_count_by_country["scaled_count"] = (
+            dino_count_by_country["scaled_count"] + 1
+        ) * 20
+        return dino_count_by_country
+    else:
+        dino_count_by_country = iso_df.copy()
+        dino_count_by_country[["count", "scaled_count"]] = (0, 0)
+
+        return dino_count_by_country
+
+
+# Obtener top de paises por periodo
+def get_countries_top_ten(periodo):
+    if periodo:
+        if periodo == "Todos":
+            dino_count_by_country = data["lived_in"].value_counts().reset_index()
+        elif len(periodo):
+            dino_count_by_country = (
+                data[data["period"].isin(periodo)]["lived_in"]
+                .value_counts()
+                .reset_index()
+            )
+
+        res_data = dino_count_by_country.nlargest(10, "count")
+        return res_data.sort_values(by="count", ascending=True)
+    else:
+        return pd.DataFrame({"lived_in": [], "count": []})
 
 
 # Main layout
@@ -314,7 +361,18 @@ def layout_periodo():
                 className="text-white p-6 bg-[#111111] rounded-lg mb-2",
             ),
             html.Div(id="tiles-container", children=tiles("Todos")),
-        ]
+            html.Div(
+                children=[
+                    dcc.Graph(
+                        id="grafico-periodo-paises", figure=dino_period_by_country()
+                    ),
+                    dcc.Graph(
+                        id="grafico-top-paises", figure=dino_period_top_countries()
+                    ),
+                ],
+                className="grid sm:grid-cols-2 grid-cols-1 w-full",
+            ),
+        ],
     )
 
 
@@ -624,7 +682,7 @@ def dino_overview_top_by_length(ascending=False):
 
 # Gráficos de la pantalla de Overview
 def dino_overview_by_country():
-    dino_count_by_country = get_dino_count_by_country()
+    dino_count_by_country = get_dino_count_by_country("Todos")
     # Distribución Geográfica de los Dinosaurios
     fig1 = go.Choropleth(
         locations=dino_count_by_country["country_iso_code"],
@@ -648,6 +706,13 @@ def dino_overview_by_country():
         margin=dict(l=0, r=0, t=50, b=0),
         xaxis_fixedrange=True,
         yaxis_fixedrange=True,
+        geo=dict(
+            showland=True,
+            showsubunits=True,
+            showcountries=True,
+            showocean=True,
+            oceancolor="#93c5fd",
+        ),
     )
 
     return fig
@@ -677,6 +742,74 @@ def dino_overview_count_by_period():
         font_color="#ffffff",
         xaxis_title="Periodo",
         yaxis_title="Cantidad",
+        xaxis_fixedrange=True,
+        yaxis_fixedrange=True,
+    )
+
+    return fig
+
+
+# Distribución Geográfica de los Dinosaurios por periodo
+def dino_period_by_country(periodo="Todos"):
+    dino_count_by_country = get_dino_count_by_country(periodo)
+
+    fig1 = go.Scattergeo(
+        locations=dino_count_by_country["country_iso_code"],
+        mode="markers",
+        marker=dict(
+            size=dino_count_by_country["scaled_count"],
+        ),
+        text=dino_count_by_country["count"],
+    )
+
+    fig = go.Figure(
+        data=[fig1],
+    )
+
+    fig.update_layout(
+        title="Distribución Geográfica",
+        plot_bgcolor=bg_color,
+        paper_bgcolor=bg_color,
+        font_color="#ffffff",
+        autosize=True,
+        margin=dict(l=0, r=0, t=50, b=0),
+        xaxis_fixedrange=True,
+        yaxis_fixedrange=True,
+        geo=dict(
+            showland=True,
+            showsubunits=True,
+            showcountries=True,
+            showocean=True,
+            oceancolor="#93c5fd",
+        ),
+    )
+
+    return fig
+
+
+# Top de países por periodo
+def dino_period_top_countries(periodo="Todos"):
+    dino_top_ten = get_countries_top_ten(periodo)
+
+    fig1 = go.Bar(
+        x=dino_top_ten["count"],
+        y=dino_top_ten["lived_in"],
+        texttemplate="%{x}",
+        textfont_size=12,
+        orientation="h",
+    )
+
+    fig = go.Figure(
+        data=[fig1],
+    )
+
+    fig.update_traces(marker_color=palette)
+
+    fig.update_layout(
+        title="Top de Países por Cantidad",
+        plot_bgcolor=bg_color,
+        paper_bgcolor=bg_color,
+        font_color="#ffffff",
         xaxis_fixedrange=True,
         yaxis_fixedrange=True,
     )
@@ -775,6 +908,19 @@ def update_checklists(all_selected, selected_values, options):
 @app.callback(Output("tiles-container", "children"), [Input("my-checklist", "value")])
 def update_tiles(selected_periods):
     return tiles(selected_periods)
+
+
+@app.callback(
+    Output("grafico-periodo-paises", "figure"), [Input("my-checklist", "value")]
+)
+def update_graph(selected_periods):
+    return dino_period_by_country(selected_periods)
+
+@app.callback(
+    Output("grafico-top-paises", "figure"), [Input("my-checklist", "value")]
+)
+def update_graph(selected_periods):
+    return dino_period_top_countries(selected_periods)
 
 
 # Run the app
