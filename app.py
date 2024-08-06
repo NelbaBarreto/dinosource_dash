@@ -15,7 +15,7 @@ bg_color = "#111111"
 
 MAIN_BUTTON = "relative inline-flex items-center justify-center p-1 mb-2 me-2 overflow-hidden text-gray-900 rounded-lg group bg-gradient-to-br from-teal-300 to-lime-300 group-hover:from-teal-300 group-hover:to-lime-300 focus:ring-4 focus:outline-none"
 MAIN_BUTTON_SPAN = "md:text-xl text-md relative px-5 py-2.5 transition-all ease-in duration-75 bg-white rounded-md font-semibold group-hover:bg-opacity-0 hover:font-bold"
-SELECTED_MAIN_BUTTON_SPAN = "md:text-xl text-md relative px-5 py-2.5 transition-all ease-in duration-75 group bg-gradient-to-br from-teal-300 to-lime-300 rounded-md font-semibold group-hover:bg-opacity-0 hover:font-bold"
+SELECTED_MAIN_BUTTON_SPAN = "md:text-xl text-md relative px-5 py-2.5 transition-all group bg-gradient-to-br from-teal-300 to-lime-300 rounded-md font-semibold group-hover:bg-opacity-0 hover:font-bold"
 TILE = "relative inline-flex items-center justify-center p-2 mb-2 me-2 overflow-hidden text-lg font-bold text-gray-900 rounded-lg group bg-gradient-to-br from-teal-300 to-lime-300 group-hover:from-teal-300 group-hover:to-lime-300"
 
 # Initialize the app
@@ -701,7 +701,7 @@ def display_page(n_clicks_overview, n_clicks_periodo, n_clicks_facts):
             SELECTED_MAIN_BUTTON_SPAN,
             MAIN_BUTTON_SPAN,
             MAIN_BUTTON_SPAN,
-        )
+        )     
     else:
         button_id = ctx.triggered[0]["prop_id"].split(".")[0]
         if button_id == "btn-overview":
