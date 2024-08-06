@@ -52,14 +52,52 @@ data["period"] = data["full_period"].apply(substr_till_second_space)
 data.loc[data["lived_in"] == "North Africa", "lived_in"] = "Algeria"
 data.loc[data["lived_in"] == "Wales", "lived_in"] = "United Kingdom"
 
-unique_periods = list(data["period"].unique())
-periods_options = [{"label": html.Span(period, className="ml-2 hover:text-lime-300 hover:underline"), "value": period} for period in unique_periods]
+
+def get_periods_options():
+    unique_periods = list(data["period"].unique())
+    periods_options = [
+        {
+            "label": html.Span(
+                period, className="ml-2 hover:text-lime-300 hover:underline"
+            ),
+            "value": period,
+        }
+        for period in unique_periods
+    ]
+    return periods_options
+
+
 # Obtener cantidad total de dinosaurios
-total_count = len(data)
+def get_total_count(periodo):
+    if periodo == "Todos":
+        return len(data)
+    elif len(periodo):
+        return (data["period"].isin(periodo)).sum()
+    else:
+        return 0
+
+
 # Obtener cantidad total de países
-total_country_count = len(data.groupby("lived_in"))
+def get_total_country_count(periodo):
+    if periodo == "Todos":
+        return len(data.groupby("lived_in"))
+    elif len(periodo):
+        res = data[data["period"].isin(periodo)].groupby("lived_in")
+        return len(res)
+    else:
+        return 0
+
+
 # Obtener cantidad total de periodos
-total_period_count = len(data.groupby("period"))
+def get_total_period_count(periodo):
+    if periodo == "Todos":
+        return len(data.groupby("period"))
+    elif len(periodo):
+        return len(periodo)
+    else:
+        return 0
+
+
 # Definir la paleta de colores
 palette = px.colors.sequential.Tealgrn + [
     "rgb(30, 105, 133)",
@@ -182,56 +220,7 @@ app.layout = html.Div(
 def layout_overview():
     return html.Div(
         [
-            html.Div(
-                children=[
-                    html.Div(
-                        [
-                            html.Div(
-                                [
-                                    html.Img(
-                                        src=app.get_asset_url("icons8-dino-67.png"),
-                                        className="mx-auto sm:w-14 sm:h-14 w-10 h-10 mb-2",
-                                    ),
-                                    html.Span(f"{total_count} dinosaurios"),
-                                ],
-                                className="text-center",
-                            )
-                        ],
-                        className=TILE,
-                    ),
-                    html.Div(
-                        [
-                            html.Div(
-                                [
-                                    html.Img(
-                                        src=app.get_asset_url("icons8-earth-100.png"),
-                                        className="mx-auto sm:w-14 sm:h-14 w-10 h-10 mb-2",
-                                    ),
-                                    html.Span(f"{total_country_count} países"),
-                                ],
-                                className="text-center",
-                            )
-                        ],
-                        className=TILE,
-                    ),
-                    html.Div(
-                        [
-                            html.Div(
-                                [
-                                    html.Img(
-                                        src=app.get_asset_url("icons8-rock-100.png"),
-                                        className="mx-auto sm:w-14 sm:h-14 w-10 h-10 mb-2",
-                                    ),
-                                    html.Span(f"{total_period_count} periodos"),
-                                ],
-                                className="text-center",
-                            )
-                        ],
-                        className=TILE,
-                    ),
-                ],
-                className="grid sm:grid-cols-3 grid-cols-1",
-            ),
+            tiles(),
             html.Div(
                 children=[
                     dcc.Graph(id="grafico-dieta", figure=dino_overview_count_by_diet()),
@@ -290,26 +279,39 @@ def layout_overview():
 # Gráficos de pantalla de periodo
 def layout_periodo():
     return html.Div(
-    [
-        dcc.Checklist(
-            id="all-or-none",
-            options=[{"label": html.Span("Seleccionar/Deseleccionar Todos", className="ml-2 hover:text-lime-300 hover:underline"), "value": "Todos"}],
-            value=[],
-            className="mb-2",
-            labelStyle={"cursor": "pointer"},
-            inputStyle={"cursor": "pointer"}
-        ),
-        dcc.Checklist(
-            id="my-checklist",
-            options=periods_options,
-            value=[],
-            className="grid sm:grid-cols-2 lg:grid-cols-3 grid-cols-1 gap-2",
-            labelStyle={"cursor": "pointer"},
-            inputStyle={"cursor": "pointer"}
-        ),
-    ],
-    className="text-white p-6 bg-[#111111] rounded-lg"
-)
+        children=[
+            html.Div(
+                [
+                    dcc.Checklist(
+                        id="all-or-none",
+                        options=[
+                            {
+                                "label": html.Span(
+                                    "Seleccionar/Deseleccionar Todos",
+                                    className="ml-2 hover:text-lime-300 hover:underline",
+                                ),
+                                "value": "Todos",
+                            }
+                        ],
+                        value=[],
+                        className="mb-2",
+                        labelStyle={"cursor": "pointer"},
+                        inputStyle={"cursor": "pointer"},
+                    ),
+                    dcc.Checklist(
+                        id="my-checklist",
+                        options=get_periods_options(),
+                        value=[],
+                        className="grid sm:grid-cols-2 lg:grid-cols-3 grid-cols-1 gap-2",
+                        labelStyle={"cursor": "pointer"},
+                        inputStyle={"cursor": "pointer"},
+                    ),
+                ],
+                className="text-white p-6 bg-[#111111] rounded-lg",
+            ),
+            html.Div(id="tiles-container"),
+        ]
+    )
 
 
 # Gráficos de pantalla de facts
@@ -365,6 +367,59 @@ def layout_facts():
             ),
         ],
         className="container",
+    )
+
+
+def tiles(periodo="Todos"):
+    return html.Div(
+        children=[
+            html.Div(
+                [
+                    html.Div(
+                        [
+                            html.Img(
+                                src=app.get_asset_url("icons8-dino-67.png"),
+                                className="mx-auto sm:w-14 sm:h-14 w-10 h-10 mb-2",
+                            ),
+                            html.Span(f"{get_total_count(periodo)} dinosaurios"),
+                        ],
+                        className="text-center",
+                    )
+                ],
+                className=TILE,
+            ),
+            html.Div(
+                [
+                    html.Div(
+                        [
+                            html.Img(
+                                src=app.get_asset_url("icons8-earth-100.png"),
+                                className="mx-auto sm:w-14 sm:h-14 w-10 h-10 mb-2",
+                            ),
+                            html.Span(f"{get_total_country_count(periodo)} países"),
+                        ],
+                        className="text-center",
+                    )
+                ],
+                className=TILE,
+            ),
+            html.Div(
+                [
+                    html.Div(
+                        [
+                            html.Img(
+                                src=app.get_asset_url("icons8-rock-100.png"),
+                                className="mx-auto sm:w-14 sm:h-14 w-10 h-10 mb-2",
+                            ),
+                            html.Span(f"{get_total_period_count(periodo)} periodos"),
+                        ],
+                        className="text-center",
+                    )
+                ],
+                className=TILE,
+            ),
+        ],
+        className="grid sm:grid-cols-3 grid-cols-1",
     )
 
 
@@ -641,16 +696,35 @@ def dino_overview_count_by_period():
 def display_page(n_clicks_overview, n_clicks_periodo, n_clicks_facts):
     ctx = dash.callback_context
     if not ctx.triggered:
-        # return (layout_overview(), SELECTED_MAIN_BUTTON_SPAN, MAIN_BUTTON_SPAN, MAIN_BUTTON_SPAN)
-        return (layout_periodo(), MAIN_BUTTON_SPAN, SELECTED_MAIN_BUTTON_SPAN, MAIN_BUTTON_SPAN)
+        return (
+            layout_overview(),
+            SELECTED_MAIN_BUTTON_SPAN,
+            MAIN_BUTTON_SPAN,
+            MAIN_BUTTON_SPAN,
+        )
     else:
         button_id = ctx.triggered[0]["prop_id"].split(".")[0]
         if button_id == "btn-overview":
-            return (layout_overview(), SELECTED_MAIN_BUTTON_SPAN, MAIN_BUTTON_SPAN, MAIN_BUTTON_SPAN)
+            return (
+                layout_overview(),
+                SELECTED_MAIN_BUTTON_SPAN,
+                MAIN_BUTTON_SPAN,
+                MAIN_BUTTON_SPAN,
+            )
         elif button_id == "btn-periodo":
-            return (layout_periodo(), MAIN_BUTTON_SPAN, SELECTED_MAIN_BUTTON_SPAN, MAIN_BUTTON_SPAN)
+            return (
+                layout_periodo(),
+                MAIN_BUTTON_SPAN,
+                SELECTED_MAIN_BUTTON_SPAN,
+                MAIN_BUTTON_SPAN,
+            )
         elif button_id == "btn-facts":
-            return (layout_facts(), MAIN_BUTTON_SPAN, MAIN_BUTTON_SPAN, SELECTED_MAIN_BUTTON_SPAN)
+            return (
+                layout_facts(),
+                MAIN_BUTTON_SPAN,
+                MAIN_BUTTON_SPAN,
+                SELECTED_MAIN_BUTTON_SPAN,
+            )
 
 
 @app.callback(
@@ -666,12 +740,11 @@ def update_top_longitud(n_clicks):
     )
     return figure, button_text
 
+
 @app.callback(
-    [Output("my-checklist", "value"),
-     Output("all-or-none", "value")],
-    [Input("all-or-none", "value"),
-     Input("my-checklist", "value")],
-    [State("my-checklist", "options")]
+    [Output("my-checklist", "value"), Output("all-or-none", "value")],
+    [Input("all-or-none", "value"), Input("my-checklist", "value")],
+    [State("my-checklist", "options")],
 )
 def update_checklists(all_selected, selected_values, options):
     ctx = dash.callback_context
@@ -679,7 +752,7 @@ def update_checklists(all_selected, selected_values, options):
     if not ctx.triggered:
         raise dash.exceptions.PreventUpdate
 
-    triggered_id = ctx.triggered[0]['prop_id'].split('.')[0]
+    triggered_id = ctx.triggered[0]["prop_id"].split(".")[0]
 
     if triggered_id == "all-or-none":
         if "Todos" in all_selected:
@@ -692,6 +765,12 @@ def update_checklists(all_selected, selected_values, options):
             return [selected_values, ["Todos"]]
         else:
             return [selected_values, []]
+
+
+@app.callback(Output("tiles-container", "children"), [Input("my-checklist", "value")])
+def update_tiles(selected_periods):
+    return tiles(selected_periods)
+
 
 # Run the app
 if __name__ == "__main__":
