@@ -167,9 +167,13 @@ iso_data = {
 # Convertir el diccionario a un dataframe
 iso_df = pd.DataFrame.from_dict(iso_data, orient="index").reset_index()
 iso_df.columns = ["lived_in", "country_iso_code"]
+
+
 # Crear un dataframe de cantidad de dinosaurios por país
-dino_count_by_country = data["lived_in"].value_counts().sort_values().reset_index()
-dino_count_by_country = dino_count_by_country.merge(iso_df, on="lived_in", how="left")
+def get_dino_count_by_country():
+    dino_count_by_country = data["lived_in"].value_counts().sort_values().reset_index()
+    return dino_count_by_country.merge(iso_df, on="lived_in", how="left")
+
 
 # Main layout
 app.layout = html.Div(
@@ -307,9 +311,9 @@ def layout_periodo():
                         inputStyle={"cursor": "pointer"},
                     ),
                 ],
-                className="text-white p-6 bg-[#111111] rounded-lg",
+                className="text-white p-6 bg-[#111111] rounded-lg mb-2",
             ),
-            html.Div(id="tiles-container"),
+            html.Div(id="tiles-container", children=tiles("Todos")),
         ]
     )
 
@@ -419,7 +423,7 @@ def tiles(periodo="Todos"):
                 className=TILE,
             ),
         ],
-        className="grid sm:grid-cols-3 grid-cols-1",
+        className="grid sm:grid-cols-3 grid-cols-1 w-full",
     )
 
 
@@ -620,6 +624,7 @@ def dino_overview_top_by_length(ascending=False):
 
 # Gráficos de la pantalla de Overview
 def dino_overview_by_country():
+    dino_count_by_country = get_dino_count_by_country()
     # Distribución Geográfica de los Dinosaurios
     fig1 = go.Choropleth(
         locations=dino_count_by_country["country_iso_code"],
@@ -701,7 +706,7 @@ def display_page(n_clicks_overview, n_clicks_periodo, n_clicks_facts):
             SELECTED_MAIN_BUTTON_SPAN,
             MAIN_BUTTON_SPAN,
             MAIN_BUTTON_SPAN,
-        )     
+        )
     else:
         button_id = ctx.triggered[0]["prop_id"].split(".")[0]
         if button_id == "btn-overview":
@@ -750,7 +755,7 @@ def update_checklists(all_selected, selected_values, options):
     ctx = dash.callback_context
 
     if not ctx.triggered:
-        raise dash.exceptions.PreventUpdate
+        return [[option["value"] for option in options], ["Todos"]]
 
     triggered_id = ctx.triggered[0]["prop_id"].split(".")[0]
 
