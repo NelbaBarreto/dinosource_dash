@@ -16,8 +16,8 @@ external_scripts = [{"src": "https://cdn.tailwindcss.com"}]
 bg_color = "#111111"
 
 MAIN_BUTTON = "relative inline-flex items-center justify-center p-1 mb-2 me-2 overflow-hidden text-gray-900 rounded-lg group bg-gradient-to-br from-teal-300 to-lime-300 group-hover:from-teal-300 group-hover:to-lime-300 focus:ring-4 focus:outline-none"
-MAIN_BUTTON_SPAN = "md:text-xl text-md relative px-5 py-2.5 transition-all ease-in duration-75 bg-white rounded-md font-semibold group-hover:bg-opacity-0 hover:font-bold"
-SELECTED_MAIN_BUTTON_SPAN = "md:text-xl text-md relative px-5 py-2.5 transition-all group bg-gradient-to-br from-teal-300 to-lime-300 rounded-md font-semibold group-hover:bg-opacity-0 hover:font-bold"
+MAIN_BUTTON_SPAN = "md:text-xl text-sm relative px-5 py-2.5 transition-all ease-in duration-75 bg-white rounded-md font-semibold group-hover:bg-opacity-0 hover:font-bold"
+SELECTED_MAIN_BUTTON_SPAN = "md:text-xl text-sm relative px-5 py-2.5 transition-all group bg-gradient-to-br from-teal-300 to-lime-300 rounded-md font-semibold group-hover:bg-opacity-0 hover:font-bold"
 TILE = "relative inline-flex items-center justify-center p-2 mb-2 me-2 overflow-hidden text-lg font-bold text-gray-900 rounded-lg group bg-gradient-to-br from-teal-300 to-lime-300 group-hover:from-teal-300 group-hover:to-lime-300"
 
 # Initialize the app
@@ -171,6 +171,26 @@ iso_df = pd.DataFrame.from_dict(iso_data, orient="index").reset_index()
 iso_df.columns = ["lived_in", "country_iso_code"]
 
 
+def disclaimer():
+    return (
+        html.P(
+            children=[
+                html.Span("🚨 Observación: ", className="text-red-500 font-bold"),
+                "Todos los datos presentados a continuación están basados en el ",
+                html.A(
+                    children=[html.Span("dataset")],
+                    href="https://www.kaggle.com/datasets/kjanjua/jurassic-park-the-exhaustive-dinosaur-dataset",
+                    target="_blank",
+                    rel="noopener noreferrer",
+                    className="text-lime-300 underline",
+                ),
+                " utilizado de fuente.",
+            ],
+            className="mb-2 text-white border-s-4 border-red-500",
+        )
+    )
+
+
 # Obtener la cantidad de dinosaurios por país
 def get_dino_count_by_country(periodo):
     if periodo:
@@ -230,8 +250,11 @@ app.layout = html.Div(
             [
                 html.Div(
                     html.Span(
-                        f"dinosource 🦕",
-                        className="md:text-xl sm:text-md text-xs relative px-5 py-2.5 transition-all ease-in duration-75 bg-black text-white rounded-md font-bold font-serif",
+                        children=[
+                            html.Span("dinosource ", className="hidden md:inline"),
+                            "🦕",
+                        ],
+                        className="md:text-xl sm:text-md relative px-5 py-2.5 transition-all ease-in duration-75 bg-black text-white rounded-md font-bold font-serif",
                     ),
                     className=MAIN_BUTTON,
                 ),
@@ -255,9 +278,17 @@ app.layout = html.Div(
                     id="btn-facts",
                     n_clicks=0,
                     className=MAIN_BUTTON,
-                    children=html.Span(
-                        "Más Info", className=MAIN_BUTTON_SPAN, id="span-facts"
-                    ),
+                    children=[
+                        html.Span(
+                            children=[
+                                html.Span("Más ", className="hidden md:inline"),
+                                html.Span("+", className="inline md:hidden"),
+                                "Info",
+                            ],
+                            className=MAIN_BUTTON_SPAN,
+                            id="span-facts",
+                        ),
+                    ],
                 ),
             ],
             className="flex justify-center mt-5",
@@ -271,6 +302,7 @@ app.layout = html.Div(
 def layout_overview():
     return html.Div(
         [
+            disclaimer(),
             tiles(),
             html.Div(
                 children=[
@@ -331,6 +363,7 @@ def layout_overview():
 def layout_periodo():
     return html.Div(
         children=[
+            disclaimer(),
             html.Div(
                 [
                     dcc.Checklist(
@@ -401,21 +434,7 @@ def layout_facts():
 
     return html.Div(
         children=[
-            html.P(
-                children=[
-                    html.Span("🚨 Observación: ", className="text-red-500 font-bold"),
-                    "Todos los datos presentados a continuación están basados en el ",
-                    html.A(
-                        children=[html.Span("dataset")],
-                        href="https://www.kaggle.com/datasets/kjanjua/jurassic-park-the-exhaustive-dinosaur-dataset",
-                        target="_blank",
-                        rel="noopener noreferrer",
-                        className="text-lime-300 underline",
-                    ),
-                    " utilizado de fuente.",
-                ],
-                className="mb-2 text-white border-s-4 border-red-500",
-            ),
+            disclaimer(),
             html.Div(
                 children=[
                     dino_card("La mayor longitud", max_length_dinosaur),
@@ -916,9 +935,8 @@ def update_tiles(selected_periods):
 def update_graph(selected_periods):
     return dino_period_by_country(selected_periods)
 
-@app.callback(
-    Output("grafico-top-paises", "figure"), [Input("my-checklist", "value")]
-)
+
+@app.callback(Output("grafico-top-paises", "figure"), [Input("my-checklist", "value")])
 def update_graph(selected_periods):
     return dino_period_top_countries(selected_periods)
 
