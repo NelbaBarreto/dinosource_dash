@@ -1,3 +1,17 @@
+"""
+Dinosource Dash App
+
+Para correr la aplicación:
+- Modo desarrollo: python app.py
+- Con gunicorn: gunicorn app:server --bind 0.0.0.0:8050
+- O usar el script: ./run.sh
+
+Nota: El comando correcto es app:server porque en Dash necesitamos 
+acceder al objeto server (app.server) en la línea 32, no al objeto app.
+
+Fuente: La aplicación usa la fuente Inter de Google Fonts, una tipografía moderna
+y legible que mejora significativamente la apariencia del dashboard.
+"""
 import dash
 from dash import dcc
 from dash import html
@@ -8,17 +22,22 @@ from sklearn.preprocessing import MinMaxScaler
 import numpy as np
 import pandas as pd
 import random
+import os
+import time
+from urllib.request import urlopen
+import urllib.error
 
 # call the ability to add external scripts
 external_scripts = [{"src": "https://cdn.tailwindcss.com"}]
 
 # Styles
-bg_color = "#111111"
+bg_color = "#0a0a0a"
+card_bg = "#1a1a1a"
 
-MAIN_BUTTON = "relative inline-flex items-center justify-center p-1 mb-2 me-2 overflow-hidden text-gray-900 rounded-lg group bg-gradient-to-br from-teal-300 to-lime-300 group-hover:from-teal-300 group-hover:to-lime-300 focus:ring-4 focus:outline-none"
-MAIN_BUTTON_SPAN = "md:text-xl text-sm relative px-5 py-2.5 transition-all ease-in duration-75 bg-white rounded-md font-semibold group-hover:bg-opacity-0 hover:font-bold"
-SELECTED_MAIN_BUTTON_SPAN = "md:text-xl text-sm relative px-5 py-2.5 transition-all group bg-gradient-to-br from-teal-300 to-lime-300 rounded-md font-semibold group-hover:bg-opacity-0 hover:font-bold"
-TILE = "relative inline-flex items-center justify-center p-2 mb-2 me-2 overflow-hidden text-lg font-bold text-gray-900 rounded-lg group bg-gradient-to-br from-teal-300 to-lime-300 group-hover:from-teal-300 group-hover:to-lime-300"
+MAIN_BUTTON = "relative inline-flex items-center justify-center p-1 mb-2 me-2 overflow-hidden text-gray-900 rounded-xl group bg-gradient-to-br from-teal-400 via-emerald-400 to-lime-300 group-hover:from-teal-400 group-hover:via-emerald-400 group-hover:to-lime-300 focus:ring-4 focus:outline-none shadow-lg shadow-emerald-500/20 transition-transform hover:scale-105"
+MAIN_BUTTON_SPAN = "md:text-xl text-sm relative px-6 py-3 transition-all ease-in duration-300 bg-white rounded-xl font-semibold group-hover:bg-opacity-0 hover:font-bold"
+SELECTED_MAIN_BUTTON_SPAN = "md:text-xl text-sm relative px-6 py-3 transition-all group bg-gradient-to-br from-teal-400 via-emerald-400 to-lime-300 rounded-xl font-semibold group-hover:bg-opacity-0 hover:font-bold shadow-inner"
+TILE = "relative inline-flex items-center justify-center p-4 mb-2 me-2 overflow-hidden text-lg font-bold text-gray-900 rounded-2xl group bg-gradient-to-br from-teal-400 via-emerald-400 to-lime-300 group-hover:from-teal-400 group-hover:via-emerald-400 group-hover:to-lime-300 shadow-lg shadow-emerald-500/30 transition-all duration-300 hover:scale-105 hover:shadow-2xl hover:shadow-emerald-500/40"
 
 # Initialize the app
 app = dash.Dash(
@@ -28,12 +47,117 @@ app = dash.Dash(
     title="dinosource",
 )
 
+# Configurar fuente personalizada Inter de Google Fonts
+app.index_string = '''
+<!DOCTYPE html>
+<html>
+    <head>
+        {%metas%}
+        <title>{%title%}</title>
+        {%favicon%}
+        {%css%}
+        <link rel="preconnect" href="https://fonts.googleapis.com">
+        <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+        <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet">
+        <style>
+            * {
+                font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+            }
+            body {
+                font-family: 'Inter', sans-serif;
+            }
+        </style>
+    </head>
+    <body>
+        {%app_entry%}
+        <footer>
+            {%config%}
+            {%scripts%}
+            {%renderer%}
+        </footer>
+    </body>
+</html>
+'''
+
 server = app.server
 
-data = pd.read_csv(
-    "https://raw.githubusercontent.com/NelbaBarreto/programacion-ciencias-datos/main/data/dinosaurs_dataset.csv"
-)
+# Función para cargar datos con caché y manejo de errores
+def load_data():
+    CACHE_FILE = "dinosaurs_dataset_cache.csv"
+    DATA_URL = "https://raw.githubusercontent.com/NelbaBarreto/programacion-ciencias-datos/main/data/dinosaurs_dataset.csv"
+    
+    # Intentar cargar desde caché local
+    if os.path.exists(CACHE_FILE):
+        try:
+            print(f"📦 Cargando datos desde caché local: {CACHE_FILE}")
+            df = pd.read_csv(CACHE_FILE)
+            print("✅ Datos cargados exitosamente desde caché")
+            return df
+        except Exception as e:
+            print(f"⚠️  Error al cargar caché: {e}")
+            # Intentar descargar de nuevo
+    
+    # Intentar descargar desde internet con reintentos
+    max_retries = 3
+    retry_delay = 5
+    
+    for attempt in range(max_retries):
+        try:
+            print(f"🌐 Intentando descargar datos desde GitHub (intento {attempt + 1}/{max_retries})...")
+            
+            # Usar urlopen con timeout
+            response = urlopen(DATA_URL, timeout=30)
+            df = pd.read_csv(response)
+            
+            # Guardar en caché para futuras sesiones
+            try:
+                df.to_csv(CACHE_FILE, index=False)
+                print(f"✅ Datos guardados en caché: {CACHE_FILE}")
+            except Exception as cache_error:
+                print(f"⚠️  No se pudo guardar en caché: {cache_error}")
+            
+            print("✅ Datos descargados exitosamente")
+            return df
+            
+        except urllib.error.HTTPError as e:
+            if e.code == 429:  # Too Many Requests
+                if attempt < max_retries - 1:
+                    print(f"⚠️  Rate limit alcanzado. Esperando {retry_delay} segundos...")
+                    time.sleep(retry_delay)
+                    retry_delay *= 2  # Aumentar delay exponencialmente
+                else:
+                    print("❌ Error: Muchas solicitudes. Usando datos del caché si existe.")
+                    if os.path.exists(CACHE_FILE):
+                        print("📦 Intentando cargar desde caché local...")
+                        return pd.read_csv(CACHE_FILE)
+                    raise
+            else:
+                print(f"❌ Error HTTP {e.code}: {e.reason}")
+                if attempt < max_retries - 1:
+                    time.sleep(retry_delay)
+                else:
+                    raise
+                    
+        except Exception as e:
+            print(f"❌ Error al descargar datos: {e}")
+            if attempt < max_retries - 1:
+                time.sleep(retry_delay)
+            else:
+                # Último intento: usar caché si existe
+                if os.path.exists(CACHE_FILE):
+                    print("📦 Intentando cargar desde caché local como última opción...")
+                    return pd.read_csv(CACHE_FILE)
+                raise
+    
+    # Si llegamos aquí sin retornar nada
+    raise Exception("No se pudo cargar los datos después de múltiples intentos")
 
+# Cargar datos
+print("🦕 Iniciando carga de datos...")
+data = load_data()
+
+# Procesar datos
+print("🔄 Procesando datos...")
 data["length"] = data["length"].str.replace("m", "")  # Quitar el caracter m
 data["length"] = data["length"].astype(float)
 # Capitalizar los valores de la columna name
@@ -53,6 +177,7 @@ data["period"] = data["full_period"].apply(substr_till_second_space)
 # Corregir los valores de la columna "lived_in"
 data.loc[data["lived_in"] == "North Africa", "lived_in"] = "Algeria"
 data.loc[data["lived_in"] == "Wales", "lived_in"] = "United Kingdom"
+print("✅ Datos procesados correctamente")
 
 
 def get_periods_options():
@@ -60,7 +185,7 @@ def get_periods_options():
     periods_options = [
         {
             "label": html.Span(
-                period, className="ml-2 hover:text-lime-300 hover:underline"
+                period, className="ml-3 hover:text-lime-300 transition-colors duration-200 font-medium"
             ),
             "value": period,
         }
@@ -173,20 +298,25 @@ iso_df.columns = ["lived_in", "country_iso_code"]
 
 def disclaimer():
     return (
-        html.P(
+        html.Div(
             children=[
-                html.Span("🚨 Observación: ", className="text-red-500 font-bold"),
-                "Todos los datos presentados a continuación están basados en el ",
-                html.A(
-                    children=[html.Span("dataset")],
-                    href="https://www.kaggle.com/datasets/kjanjua/jurassic-park-the-exhaustive-dinosaur-dataset",
-                    target="_blank",
-                    rel="noopener noreferrer",
-                    className="text-lime-300 underline",
-                ),
-                " utilizado de fuente.",
+                html.P(
+                    children=[
+                        html.Span("🚨 Observación: ", className="text-red-400 font-bold text-lg"),
+                        "Todos los datos presentados a continuación están basados en el ",
+                        html.A(
+                            children=[html.Span("dataset")],
+                            href="https://www.kaggle.com/datasets/kjanjua/jurassic-park-the-exhaustive-dinosaur-dataset",
+                            target="_blank",
+                            rel="noopener noreferrer",
+                            className="text-lime-300 hover:text-lime-400 underline font-semibold transition-colors",
+                        ),
+                        " utilizado de fuente.",
+                    ],
+                    className="mb-0 text-white",
+                )
             ],
-            className="mb-2 text-white border-s-4 border-red-500",
+            className="mb-4 text-white border-l-4 border-red-500 bg-gradient-to-r from-red-950/30 via-red-900/20 to-transparent px-6 py-4 rounded-r-lg shadow-lg hover:shadow-xl transition-shadow",
         )
     )
 
@@ -244,56 +374,62 @@ def get_countries_top_ten(periodo):
 
 # Main layout
 app.layout = html.Div(
-    className="container m-auto",
+    className="min-h-screen bg-gradient-to-br from-gray-950 via-black to-gray-950",
+    style={"minHeight": "100vh"},
     children=[
         html.Div(
-            [
+            className="container m-auto",
+            children=[
                 html.Div(
-                    html.Span(
-                        children=[
-                            html.Span("dinosource ", className="hidden md:inline"),
-                            "🦕",
-                        ],
-                        className="md:text-xl sm:text-md relative px-5 py-2.5 transition-all ease-in duration-75 bg-black text-white rounded-md font-bold font-serif",
-                    ),
-                    className=MAIN_BUTTON,
-                ),
-                html.Button(
-                    id="btn-overview",
-                    n_clicks=0,
-                    className=MAIN_BUTTON,
-                    children=html.Span(
-                        "Overview", className=MAIN_BUTTON_SPAN, id="span-overview"
-                    ),
-                ),
-                html.Button(
-                    id="btn-periodo",
-                    n_clicks=0,
-                    className=MAIN_BUTTON,
-                    children=html.Span(
-                        "Periodo", className=MAIN_BUTTON_SPAN, id="span-periodo"
-                    ),
-                ),
-                html.Button(
-                    id="btn-facts",
-                    n_clicks=0,
-                    className=MAIN_BUTTON,
-                    children=[
-                        html.Span(
+                    [
+                        html.Div(
+                            html.Span(
+                                children=[
+                                    html.Span("dinosource ", className="hidden md:inline"),
+                                    "🦕",
+                                ],
+                                className="md:text-xl sm:text-md relative px-6 py-3 transition-all ease-in duration-75 bg-black text-white rounded-xl font-bold font-serif shadow-lg",
+                            ),
+                            className=MAIN_BUTTON,
+                        ),
+                        html.Button(
+                            id="btn-overview",
+                            n_clicks=0,
+                            className=MAIN_BUTTON,
+                            children=html.Span(
+                                "Overview", className=MAIN_BUTTON_SPAN, id="span-overview"
+                            ),
+                        ),
+                        html.Button(
+                            id="btn-periodo",
+                            n_clicks=0,
+                            className=MAIN_BUTTON,
+                            children=html.Span(
+                                "Periodo", className=MAIN_BUTTON_SPAN, id="span-periodo"
+                            ),
+                        ),
+                        html.Button(
+                            id="btn-facts",
+                            n_clicks=0,
+                            className=MAIN_BUTTON,
                             children=[
-                                html.Span("Más ", className="hidden md:inline"),
-                                html.Span("+", className="inline md:hidden"),
-                                "Info",
+                                html.Span(
+                                    children=[
+                                        html.Span("Más ", className="hidden md:inline"),
+                                        html.Span("+", className="inline md:hidden"),
+                                        "Info",
+                                    ],
+                                    className=MAIN_BUTTON_SPAN,
+                                    id="span-facts",
+                                ),
                             ],
-                            className=MAIN_BUTTON_SPAN,
-                            id="span-facts",
                         ),
                     ],
+                    className="flex justify-center mt-5 mb-8",
                 ),
+                html.Div(id="page-content", className="lg:p-10 p-4"),
             ],
-            className="flex justify-center mt-5",
         ),
-        html.Div(id="page-content", className="lg:p-10 p-2"),
     ],
 )
 
@@ -306,13 +442,19 @@ def layout_overview():
             tiles(),
             html.Div(
                 children=[
-                    dcc.Graph(id="grafico-dieta", figure=dino_overview_count_by_diet()),
-                    dcc.Graph(
-                        id="grafico-dieta-longitud",
-                        figure=dino_overview_length_by_diet(),
+                    html.Div(
+                        className="bg-gradient-to-br from-gray-900 to-black rounded-2xl p-4 border border-gray-800 shadow-2xl",
+                        children=dcc.Graph(id="grafico-dieta", figure=dino_overview_count_by_diet())
+                    ),
+                    html.Div(
+                        className="bg-gradient-to-br from-gray-900 to-black rounded-2xl p-4 border border-gray-800 shadow-2xl",
+                        children=dcc.Graph(
+                            id="grafico-dieta-longitud",
+                            figure=dino_overview_length_by_diet(),
+                        )
                     ),
                 ],
-                className="grid xl:grid-cols-2 grid-cols-1 w-screen xl:w-full bg-[#111111] mb-2",
+                className="grid xl:grid-cols-2 grid-cols-1 w-screen xl:w-full mb-4 gap-4",
             ),
             html.Div(
                 children=[
@@ -320,6 +462,7 @@ def layout_overview():
                         id="loading-1",
                         children=[
                             html.Div(
+                                className="bg-gradient-to-br from-gray-900 to-black rounded-2xl p-4 border border-gray-800 shadow-2xl",
                                 children=[
                                     dcc.Graph(
                                         id="grafico-top-longitud",
@@ -328,9 +471,10 @@ def layout_overview():
                                     html.Button(
                                         id="btn-asc-desc",
                                         n_clicks=0,
-                                        className="relative inline-flex items-center justify-center p-1 mb-2 me-2 bg-lime-300 overflow-hidden text-gray-900 font-semibold rounded-lg focus:ring-4 focus:outline-none hover:ring-4",
+                                        className="relative inline-flex items-center justify-center p-3 mb-2 me-2 bg-gradient-to-r from-teal-400 via-emerald-400 to-lime-300 text-gray-900 font-bold rounded-xl shadow-lg shadow-emerald-500/20 focus:ring-4 focus:outline-none hover:scale-105 transition-all duration-300 hover:shadow-xl hover:shadow-emerald-500/30",
                                         children=html.Span(
                                             "Cambiar a Top Ascendente ⬆️",
+                                            className="text-sm"
                                         ),
                                     ),
                                 ],
@@ -338,22 +482,28 @@ def layout_overview():
                         ],
                         type="circle",
                     ),
-                    dcc.Graph(
-                        id="grafico-dieta", figure=dino_overview_count_by_period()
+                    html.Div(
+                        className="bg-gradient-to-br from-gray-900 to-black rounded-2xl p-4 border border-gray-800 shadow-2xl",
+                        children=dcc.Graph(
+                            id="grafico-dieta", figure=dino_overview_count_by_period()
+                        )
                     ),
                 ],
-                className="grid xl:grid-cols-2 grid-cols-1 w-screen xl:w-full bg-[#111111] mb-2 pb-2 pl-2",
+                className="grid xl:grid-cols-2 grid-cols-1 w-screen xl:w-full mb-2 gap-4",
             ),
             html.Div(
                 children=[
-                    dcc.Graph(
-                        id="grafico-distribucion",
-                        figure=dino_overview_by_country(),
-                        className="w-full",
-                        style={"height": "50vh"},
+                    html.Div(
+                        className="bg-gradient-to-br from-gray-900 to-black rounded-2xl p-4 border border-gray-800 shadow-2xl w-full",
+                        children=dcc.Graph(
+                            id="grafico-distribucion",
+                            figure=dino_overview_by_country(),
+                            className="w-full",
+                            style={"height": "50vh"},
+                        )
                     ),
                 ],
-                className="flex flex-col items-center w-full",
+                className="flex flex-col items-center w-full mb-4",
             ),
         ],
     )
@@ -372,38 +522,44 @@ def layout_periodo():
                             {
                                 "label": html.Span(
                                     "Seleccionar/Deseleccionar Todos",
-                                    className="ml-2 hover:text-lime-300 hover:underline",
+                                    className="ml-3 hover:text-lime-300 hover:underline font-semibold text-lg",
                                 ),
                                 "value": "Todos",
                             }
                         ],
                         value=[],
-                        className="mb-2",
+                        className="mb-4",
                         labelStyle={"cursor": "pointer"},
-                        inputStyle={"cursor": "pointer"},
+                        inputStyle={"cursor": "pointer", "accent-color": "#4ade80"},
                     ),
                     dcc.Checklist(
                         id="my-checklist",
                         options=get_periods_options(),
                         value=[],
-                        className="grid sm:grid-cols-2 lg:grid-cols-3 grid-cols-1 gap-2",
+                        className="grid sm:grid-cols-2 lg:grid-cols-3 grid-cols-1 gap-3",
                         labelStyle={"cursor": "pointer"},
-                        inputStyle={"cursor": "pointer"},
+                        inputStyle={"cursor": "pointer", "accent-color": "#4ade80"},
                     ),
                 ],
-                className="text-white p-6 bg-[#111111] rounded-lg mb-2",
+                className="text-white p-8 bg-gradient-to-br from-gray-900 to-black rounded-2xl mb-4 border border-gray-800 shadow-2xl",
             ),
             html.Div(id="tiles-container", children=tiles("Todos")),
             html.Div(
                 children=[
-                    dcc.Graph(
-                        id="grafico-periodo-paises", figure=dino_period_by_country()
+                    html.Div(
+                        className="bg-gradient-to-br from-gray-900 to-black rounded-2xl p-4 border border-gray-800 shadow-2xl",
+                        children=dcc.Graph(
+                            id="grafico-periodo-paises", figure=dino_period_by_country()
+                        )
                     ),
-                    dcc.Graph(
-                        id="grafico-top-paises", figure=dino_period_top_countries()
+                    html.Div(
+                        className="bg-gradient-to-br from-gray-900 to-black rounded-2xl p-4 border border-gray-800 shadow-2xl",
+                        children=dcc.Graph(
+                            id="grafico-top-paises", figure=dino_period_top_countries()
+                        )
                     ),
                 ],
-                className="grid sm:grid-cols-2 grid-cols-1 w-full",
+                className="grid sm:grid-cols-2 grid-cols-1 w-full gap-4",
             ),
         ],
     )
@@ -444,7 +600,7 @@ def layout_facts():
                     dino_card("El más antiguo", oldest_dinosaur),
                     dino_card("El más reciente", newest_dinosaur),
                 ],
-                className="grid sm:grid-cols-2 lg:grid-cols-3 grid-cols-1 gap-2",
+                className="grid sm:grid-cols-2 lg:grid-cols-3 grid-cols-1 gap-6",
             ),
         ],
         className="container",
@@ -454,17 +610,44 @@ def layout_facts():
 def tiles(periodo="Todos"):
     return html.Div(
         children=[
+                html.Div(
+                [
+                    html.Div(
+                        [
+                            html.Div(
+                                className="mx-auto sm:w-16 sm:h-16 w-12 h-12 mb-3 flex items-center justify-center",
+                                children=html.Img(
+                                    src=app.get_asset_url("icons8-dino-67.png"),
+                                    className="mx-auto sm:w-14 sm:h-14 w-10 h-10 filter drop-shadow-lg",
+                                ),
+                            ),
+                            html.Span(
+                                f"{get_total_count(periodo)} dinosaurios",
+                                className="block text-lg font-extrabold tracking-wide"
+                            ),
+                        ],
+                        className="text-center py-2",
+                    )
+                ],
+                className=TILE,
+                ),
             html.Div(
                 [
                     html.Div(
                         [
-                            html.Img(
-                                src=app.get_asset_url("icons8-dino-67.png"),
-                                className="mx-auto sm:w-14 sm:h-14 w-10 h-10 mb-2",
+                            html.Div(
+                                className="mx-auto sm:w-16 sm:h-16 w-12 h-12 mb-3 flex items-center justify-center",
+                                children=html.Img(
+                                    src=app.get_asset_url("icons8-earth-100.png"),
+                                    className="mx-auto sm:w-14 sm:h-14 w-10 h-10 filter drop-shadow-lg",
+                                ),
                             ),
-                            html.Span(f"{get_total_count(periodo)} dinosaurios"),
+                            html.Span(
+                                f"{get_total_country_count(periodo)} países",
+                                className="block text-lg font-extrabold tracking-wide"
+                            ),
                         ],
-                        className="text-center",
+                        className="text-center py-2",
                     )
                 ],
                 className=TILE,
@@ -473,34 +656,25 @@ def tiles(periodo="Todos"):
                 [
                     html.Div(
                         [
-                            html.Img(
-                                src=app.get_asset_url("icons8-earth-100.png"),
-                                className="mx-auto sm:w-14 sm:h-14 w-10 h-10 mb-2",
+                            html.Div(
+                                className="mx-auto sm:w-16 sm:h-16 w-12 h-12 mb-3 flex items-center justify-center",
+                                children=html.Img(
+                                    src=app.get_asset_url("icons8-rock-100.png"),
+                                    className="mx-auto sm:w-14 sm:h-14 w-10 h-10 filter drop-shadow-lg",
+                                ),
                             ),
-                            html.Span(f"{get_total_country_count(periodo)} países"),
-                        ],
-                        className="text-center",
-                    )
-                ],
-                className=TILE,
-            ),
-            html.Div(
-                [
-                    html.Div(
-                        [
-                            html.Img(
-                                src=app.get_asset_url("icons8-rock-100.png"),
-                                className="mx-auto sm:w-14 sm:h-14 w-10 h-10 mb-2",
+                            html.Span(
+                                f"{get_total_period_count(periodo)} periodos",
+                                className="block text-lg font-extrabold tracking-wide"
                             ),
-                            html.Span(f"{get_total_period_count(periodo)} periodos"),
                         ],
-                        className="text-center",
+                        className="text-center py-2",
                     )
                 ],
                 className=TILE,
             ),
         ],
-        className="grid sm:grid-cols-3 grid-cols-1 w-full",
+        className="grid sm:grid-cols-3 grid-cols-1 w-full gap-4",
     )
 
 
@@ -509,93 +683,84 @@ def dino_card(title, row):
         children=[
             html.H3(
                 title,
-                className="mb-2 text-2xl font-semibold text-white text-center",
+                className="mb-3 text-xl font-semibold text-gray-300 text-center uppercase tracking-wide",
             ),
             html.H4(
                 row["name"],
-                className="bg-gradient-to-r from-teal-300 to-lime-300 bg-clip-text text-transparent text-2xl font-bold",
+                className="bg-gradient-to-r from-teal-400 via-emerald-400 to-lime-300 bg-clip-text text-transparent text-3xl font-bold mb-4 text-center",
             ),
             html.Ul(
                 children=[
                     html.Li(
                         children=[
-                            html.Span(
-                                "Dieta: ", className="text-lime-300 font-semibold"
-                            ),
+                            html.Span("Dieta: ", className="text-lime-400 font-bold"),
                             row["diet"],
-                        ]
+                        ],
+                        className="mb-2 pb-2 border-b border-gray-700"
                     ),
                     html.Li(
                         children=[
-                            html.Span(
-                                "Periodo: ", className="text-lime-300 font-semibold"
-                            ),
+                            html.Span("Periodo: ", className="text-lime-400 font-bold"),
                             row["full_period"],
-                        ]
+                        ],
+                        className="mb-2 pb-2 border-b border-gray-700"
                     ),
                     html.Li(
                         children=[
-                            html.Span(
-                                "Vivió en: ", className="text-lime-300 font-semibold"
-                            ),
+                            html.Span("Vivió en: ", className="text-lime-400 font-bold"),
                             row["lived_in"],
-                        ]
+                        ],
+                        className="mb-2 pb-2 border-b border-gray-700"
                     ),
                     html.Li(
                         children=[
-                            html.Span(
-                                "Tipo: ", className="text-lime-300 font-semibold"
-                            ),
+                            html.Span("Tipo: ", className="text-lime-400 font-bold"),
                             row["type"],
-                        ]
+                        ],
+                        className="mb-2 pb-2 border-b border-gray-700"
                     ),
                     html.Li(
                         children=[
-                            html.Span(
-                                "Longitud: ", className="text-lime-300 font-semibold"
-                            ),
+                            html.Span("Longitud: ", className="text-lime-400 font-bold"),
                             f"{row['length']} m",
-                        ]
+                        ],
+                        className="mb-2 pb-2 border-b border-gray-700"
                     ),
                     html.Li(
                         children=[
-                            html.Span(
-                                "Taxonomía: ", className="text-lime-300 font-semibold"
-                            ),
+                            html.Span("Taxonomía: ", className="text-lime-400 font-bold"),
                             row["taxonomy"],
-                        ]
+                        ],
+                        className="mb-2 pb-2 border-b border-gray-700"
                     ),
                     html.Li(
                         children=[
-                            html.Span(
-                                "Nombrado por: ",
-                                className="text-lime-300 font-semibold",
-                            ),
+                            html.Span("Nombrado por: ", className="text-lime-400 font-bold"),
                             row["named_by"],
-                        ]
+                        ],
+                        className="mb-2 pb-2 border-b border-gray-700"
                     ),
                     html.Li(
                         children=[
-                            html.Span(
-                                "Especie: ", className="text-lime-300 font-semibold"
-                            ),
+                            html.Span("Especie: ", className="text-lime-400 font-bold"),
                             row["species"],
-                        ]
+                        ],
+                        className="mb-2"
                     ),
                 ],
-                className="text-white",
+                className="text-white text-sm mb-4",
             ),
             html.A(
                 children=[
-                    html.Span("Ver Más", className="font-semibold text-dark-900")
+                    html.Span("Ver Más →", className="font-bold text-gray-900")
                 ],
                 href=row["link"],
                 target="_blank",
                 rel="noopener noreferrer",
-                className="inline-flex items-center p-2 rounded-lg bg-lime-300 mt-2 hover:underline",
+                className="inline-flex items-center justify-center w-full px-4 py-3 rounded-xl bg-gradient-to-r from-teal-400 via-emerald-400 to-lime-300 hover:from-teal-500 hover:via-emerald-500 hover:to-lime-400 mt-4 shadow-lg shadow-emerald-500/30 transition-all duration-300 hover:scale-105 hover:shadow-xl",
             ),
         ],
-        className="max-w-sm p-6 bg-[#111111] rounded-lg m-auto h-full",
+        className="max-w-sm p-8 bg-gradient-to-br from-gray-900 to-black rounded-2xl m-auto h-full border border-gray-800 shadow-2xl hover:shadow-emerald-500/10 transition-all duration-300 hover:border-emerald-500/30",
     )
 
 
